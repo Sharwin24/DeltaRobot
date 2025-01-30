@@ -1,0 +1,3 @@
+float64 link1_angle # [rad]
+float64 link2_angle # [rad]
+float64 link3_angle # [rad]
