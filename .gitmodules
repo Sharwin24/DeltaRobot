@@ -1,4 +1,0 @@
-[submodule "DynamixelSDK"]
-	path = DynamixelSDK
-	url = git@github.com:ROBOTIS-GIT/DynamixelSDK.git
-	brach = ros2
