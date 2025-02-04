@@ -57,6 +57,7 @@ void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> 
   double j2 = request->link2_angle;
   double j3 = request->link3_angle;
 
+  //TODO: Implement forward kinematics
 
   // Update the response data (end effector position)
   response->x = 0.0;
@@ -69,6 +70,7 @@ void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> 
   double y = request->y;
   double z = request->z;
 
+  //TODO: Implement inverse kinematics
 
   // Update the response data (joint angles)
   response->link1_angle = 0.0;
