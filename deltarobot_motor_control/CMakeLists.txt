@@ -1,42 +1,34 @@
 cmake_minimum_required(VERSION 3.8)
-project(deltarobot_kinematics)
+project(deltarobot_motor_control)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Find dependencies
+# find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(Doxygen)
 find_package(rclcpp REQUIRED)
 find_package(deltarobot_interfaces REQUIRED)
+find_package(dynamixel_sdk REQUIRED)
+find_package(dynamixel_sdk_custom_interfaces REQUIRED)
 
 include_directories(
-  include/deltarobot_kinematics
+  include/deltarobot_motor_control
   ${deltarobot_interfaces_INCLUDE_DIRS}
 )
 
-# Delta Kinematics Node
-add_executable(kinematics src/kinematics.cpp)
-ament_target_dependencies(kinematics rclcpp deltarobot_interfaces)
-target_link_libraries(kinematics ${deltarobot_interfaces_LIBRARIES})
-
-# Install
+# Read/Write Node (Example from Dynamixel SDK)
+add_executable(read_write_node src/read_write_node.cpp)
+ament_target_dependencies(read_write_node
+  dynamixel_sdk_custom_interfaces
+  dynamixel_sdk
+  rclcpp
+)
+target_link_libraries(read_write_node dynamixel_sdk)
 install(TARGETS
-  kinematics
+  read_write_node
   DESTINATION lib/${PROJECT_NAME}
-)
-
-# Install launch files
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}
-)
-
-# Install config files
-install(DIRECTORY
-  config
-  DESTINATION share/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
