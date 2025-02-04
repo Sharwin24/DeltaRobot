@@ -7,16 +7,25 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(dynamixel_sdk REQUIRED)
 find_package(dynamixel_sdk_custom_interfaces REQUIRED)
-find_package(rclcpp REQUIRED)
+find_package(deltarobot_interfaces REQUIRED)
 
 include_directories(include)
 
 # Build
 add_executable(read_write_node src/read_write_node.cpp)
+add_executable(delta_kinematics src/delta_kinematics.cpp)
+
 ament_target_dependencies(read_write_node
   dynamixel_sdk_custom_interfaces
+  dynamixel_sdk
+  rclcpp
+)
+
+ament_target_dependencies(delta_kinematics
+  deltarobot_interfaces
   dynamixel_sdk
   rclcpp
 )
@@ -24,7 +33,20 @@ ament_target_dependencies(read_write_node
 # Install
 install(TARGETS
   read_write_node
+  delta_kinematics
   DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install launch files
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# Install config files
+install(DIRECTORY
+  config
+  DESTINATION share/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
