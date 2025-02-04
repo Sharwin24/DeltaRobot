@@ -4,7 +4,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "deltarobot_interfaces/srv/delta_fk.hpp"
 #include "deltarobot_interfaces/srv/delta_ik.hpp"
-#include "dynamixel_sdk/dynamixel_sdk.h"
 
 
 typedef struct {
