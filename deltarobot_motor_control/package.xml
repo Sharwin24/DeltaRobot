@@ -8,13 +8,14 @@
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
   <depend>rclcpp</depend>
   <depend>dynamixel_sdk</depend>
   <depend>dynamixel_sdk_custom_interfaces</depend>
   <depend>deltarobot_interfaces</depend>
-
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
