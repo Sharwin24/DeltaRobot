@@ -25,7 +25,8 @@ ament_target_dependencies(read_write_node
   dynamixel_sdk
   rclcpp
 )
-target_link_libraries(read_write_node dynamixel_sdk)
+
+# target_link_libraries(read_write_node dynamixel_sdk)
 install(TARGETS
   read_write_node
   DESTINATION lib/${PROJECT_NAME}
