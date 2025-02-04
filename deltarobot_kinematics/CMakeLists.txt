@@ -21,19 +21,6 @@ add_executable(kinematics src/kinematics.cpp)
 ament_target_dependencies(kinematics rclcpp deltarobot_interfaces)
 target_link_libraries(kinematics ${deltarobot_interfaces_LIBRARIES})
 
-# Read/Write Node (Example from Dynamixel SDK)
-# add_executable(read_write_node src/read_write_node.cpp)
-# ament_target_dependencies(read_write_node
-# dynamixel_sdk_custom_interfaces
-# dynamixel_sdk
-# rclcpp
-# )
-# target_link_libraries(read_write_node dynamixel_sdk)
-# install(TARGETS
-# read_write_node
-# DESTINATION lib/${PROJECT_NAME}
-# )
-
 # Install
 install(TARGETS
   kinematics

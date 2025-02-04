@@ -9,8 +9,6 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>rclcpp</depend>
-  <depend>dynamixel_sdk</depend>
-  <depend>dynamixel_sdk_custom_interfaces</depend>
   <depend>deltarobot_interfaces</depend>
   
 
