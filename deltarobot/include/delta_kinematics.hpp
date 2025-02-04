@@ -3,11 +3,11 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "dynamixel_sdk/dynamixel_sdk.h"
-#include "deltarobot_interfaces/srv/DeltaFK.srv"
-#include "deltarobot_interfaces/srv/DeltaIK.srv"
+#include "deltarobot_interfaces/srv/delta_fk.hpp"
+#include "deltarobot_interfaces/srv/delta_ik.hpp"
 
 
-typedef struct DeltaConfig {
+typedef struct {
   /// @brief Base Triangle Side Length [mm]
   double BL;
 
@@ -22,7 +22,7 @@ typedef struct DeltaConfig {
 
   /// @brief End Effector Triangle Side Length [mm]
   double EEL;
-};
+} DeltaConfig;
 
 
 class DeltaKinematics : public rclcpp::Node {
@@ -40,7 +40,7 @@ private:
   void forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response);
   void inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response);
   
-  const DeltaConfig robot_config;
+  DeltaConfig robot_config;
 };
 
 #endif  // DELTA_KINEMATICS_HPP_

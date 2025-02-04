@@ -7,28 +7,30 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(Doxygen)
 find_package(rclcpp REQUIRED)
 find_package(dynamixel_sdk REQUIRED)
 find_package(dynamixel_sdk_custom_interfaces REQUIRED)
 find_package(deltarobot_interfaces REQUIRED)
 
-include_directories(include)
+include_directories(
+  include
+  ${deltarobot_interfaces_INCLUDE_DIRS}
+)
 
-# Build
-add_executable(read_write_node src/read_write_node.cpp)
+# Delta Kinematics Node
 add_executable(delta_kinematics src/delta_kinematics.cpp)
+ament_target_dependencies(delta_kinematics rclcpp deltarobot_interfaces dynamixel_sdk)
+target_link_libraries(delta_kinematics dynamixel_sdk ${deltarobot_interfaces_LIBRARIES})
 
+# Read/Write Node (Example from Dynamixel SDK)
+add_executable(read_write_node src/read_write_node.cpp)
 ament_target_dependencies(read_write_node
   dynamixel_sdk_custom_interfaces
   dynamixel_sdk
   rclcpp
 )
-
-ament_target_dependencies(delta_kinematics
-  deltarobot_interfaces
-  dynamixel_sdk
-  rclcpp
-)
+target_link_libraries(read_write_node dynamixel_sdk)
 
 # Install
 install(TARGETS
@@ -61,6 +63,22 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+endif()
+
+# Building documentation should be optional.
+# To build documentation pass -DBUILD_DOCS=ON when generating the build system
+option(BUILD_DOCS "Build the documentation" OFF)
+
+# build just because Doxygen is missing
+if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
+  # Turn the README.md into the homepage of the doxygen docs
+  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+
+  # Tell Doxygen where to find the documentation
+  doxygen_add_docs(doxygen include/ src/ README.md ALL)
+
+  # The documentation will be in the build/html directory
+  # The main page is build/html/index.html
 endif()
 
 ament_package()
