@@ -1,10 +1,10 @@
-#ifndef DELTA_KINEMATICS_HPP_
-#define DELTA_KINEMATICS_HPP_
+#ifndef KINEMATICS_HPP_
+#define KINEMATICS_HPP_
 
 #include "rclcpp/rclcpp.hpp"
-#include "dynamixel_sdk/dynamixel_sdk.h"
 #include "deltarobot_interfaces/srv/delta_fk.hpp"
 #include "deltarobot_interfaces/srv/delta_ik.hpp"
+#include "dynamixel_sdk/dynamixel_sdk.h"
 
 
 typedef struct {
@@ -43,4 +43,4 @@ private:
   DeltaConfig robot_config;
 };
 
-#endif  // DELTA_KINEMATICS_HPP_
+#endif  // KINEMATICS_HPP_

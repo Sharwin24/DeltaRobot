@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(deltarobot)
+project(deltarobot_kinematics)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -9,8 +9,6 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(Doxygen)
 find_package(rclcpp REQUIRED)
-find_package(dynamixel_sdk REQUIRED)
-find_package(dynamixel_sdk_custom_interfaces REQUIRED)
 find_package(deltarobot_interfaces REQUIRED)
 
 include_directories(
@@ -19,23 +17,26 @@ include_directories(
 )
 
 # Delta Kinematics Node
-add_executable(delta_kinematics src/delta_kinematics.cpp)
-ament_target_dependencies(delta_kinematics rclcpp deltarobot_interfaces dynamixel_sdk)
-target_link_libraries(delta_kinematics dynamixel_sdk ${deltarobot_interfaces_LIBRARIES})
+add_executable(kinematics src/kinematics.cpp)
+ament_target_dependencies(kinematics rclcpp deltarobot_interfaces)
+target_link_libraries(kinematics ${deltarobot_interfaces_LIBRARIES})
 
 # Read/Write Node (Example from Dynamixel SDK)
-add_executable(read_write_node src/read_write_node.cpp)
-ament_target_dependencies(read_write_node
-  dynamixel_sdk_custom_interfaces
-  dynamixel_sdk
-  rclcpp
-)
-target_link_libraries(read_write_node dynamixel_sdk)
+# add_executable(read_write_node src/read_write_node.cpp)
+# ament_target_dependencies(read_write_node
+# dynamixel_sdk_custom_interfaces
+# dynamixel_sdk
+# rclcpp
+# )
+# target_link_libraries(read_write_node dynamixel_sdk)
+# install(TARGETS
+# read_write_node
+# DESTINATION lib/${PROJECT_NAME}
+# )
 
 # Install
 install(TARGETS
-  read_write_node
-  delta_kinematics
+  kinematics
   DESTINATION lib/${PROJECT_NAME}
 )
 

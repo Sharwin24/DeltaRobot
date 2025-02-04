@@ -1,30 +1,27 @@
-/// @file delta_kinematics.cpp
+/// @file kinematics.cpp
 /// @brief Kinematics Implementation for Delta Robot
 ///
 /// PARAMETERS:
-///   name (type): description [units]
-///
-/// PUBLISHES:
-///   ~/topic (minimec_msgs::msg::WheelCommands): output wheel commands [rad/s]
-///
-/// SUBSCRIBES:
-///   ~/topic (geometry_msgs::msg::Twist): input desired twist
+///   base_triangle_side_length (float64): The side length of the equilateral triangle defining the base [mm]
+///   active_link_length (float64): The center distance (joint to joint) of the actuated links [mm]
+///   passive_link_length (float64): The center distance (joint to joint) of the passive links [mm]
+///   passive_link_width (float64): The width of the passive links [mm]
+///   end_effector_side_length (float64): The side length of the equilateral triangle defining the end effector [mm]
 ///
 /// SERVICES:
-///   ~/delta_fk (deltarobot_interfaces::srv::DeltaFK): forward kinematics
-///   ~/delta_ik (deltarobot_interfaces::srv::DeltaIK): inverse kinematics
+///   ~/delta_fk (deltarobot_interfaces::srv::DeltaFK): Computes the end effector position given the joint angles (forward kinematics)
+///   ~/delta_ik (deltarobot_interfaces::srv::DeltaIK): Computes the joint angles given the end effector position (inverse kinematics)
 
-#include "delta_kinematics.hpp"
-
+#include "kinematics.hpp"
 
 DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   RCLCPP_INFO(this->get_logger(), "DeltaKinematics Started");
 
-  this->declare_parameter("qos_depth", 10);
-  int8_t qos_depth = 0;
-  this->get_parameter("qos_depth", qos_depth);
+  // this->declare_parameter("qos_depth", 10);
+  // int8_t qos_depth = 0;
+  // this->get_parameter("qos_depth", qos_depth);
 
-  const auto QOS_RKL10V = rclcpp::QoS(rclcpp::KeepLast(qos_depth)).reliable().durability_volatile();
+  // const auto QOS_RKL10V = rclcpp::QoS(rclcpp::KeepLast(qos_depth)).reliable().durability_volatile();
 
   // Declare parameters from yaml file
   this->declare_parameter("base_triangle_side_length", 180.0);
@@ -48,7 +45,7 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   delta_ik_server = create_service<DeltaIK>(
     "delta_ik",
     std::bind(&DeltaKinematics::inverseKinematics, this, std::placeholders::_1, std::placeholders::_2)
-    );
+  );
 }
 
 void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response) {
@@ -56,6 +53,9 @@ void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> 
   double j1 = request->link1_angle;
   double j2 = request->link2_angle;
   double j3 = request->link3_angle;
+  j1 = j1 * M_PI / 180.0;
+  j2 = j2 * M_PI / 180.0;
+  j3 = j3 * M_PI / 180.0;
 
   //TODO: Implement forward kinematics
 
@@ -69,6 +69,9 @@ void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> 
   double x = request->x;
   double y = request->y;
   double z = request->z;
+  x = x * M_PI / 180.0;
+  y = y * M_PI / 180.0;
+  z = z * M_PI / 180.0;
 
   //TODO: Implement inverse kinematics
 
