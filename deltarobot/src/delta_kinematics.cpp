@@ -64,7 +64,16 @@ void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> 
   response->z = 0.0;
 }
 void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response) {
-  // TODO
+  // Locally save the request data (end effector position)
+  double x = request->x;
+  double y = request->y;
+  double z = request->z;
+
+
+  // Update the response data (joint angles)
+  response->link1_angle = 0.0;
+  response->link2_angle = 0.0;
+  response->link3_angle = 0.0;
 }
 
 int main(int argc, char * argv[]) {
