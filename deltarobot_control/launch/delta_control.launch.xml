@@ -1,0 +1,5 @@
+<launch>
+<!-- Include the launch files from deltrarobot_kinematics and motor control -->
+  <include file="$(find-pkg-share deltarobot_kinematics)/launch/kinematics.launch.xml"/>
+  <include file="$(find-pkg-share deltarobot_motor_control)/launch/motor_control.launch.xml"/>
+</launch>
