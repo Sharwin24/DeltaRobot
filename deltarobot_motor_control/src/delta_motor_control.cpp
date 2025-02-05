@@ -32,21 +32,21 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   // Open Serial Port
   dxl_comm_result = this->portHandler->openPort();
   if (dxl_comm_result == false) {
-    RCLCPP_ERROR(rclcpp::get_logger("read_write_node"), "Failed to open the port!");
+    RCLCPP_ERROR(rclcpp::get_logger(), "Failed to open the port!");
     return -1;
   }
   else {
-    RCLCPP_INFO(rclcpp::get_logger("read_write_node"), "Succeeded to open the port.");
+    RCLCPP_INFO(rclcpp::get_logger(), "Succeeded to open the port.");
   }
 
   // Set the baudrate of the serial port (use DYNAMIXEL Baudrate)
   dxl_comm_result = this->portHandler->setBaudRate(BAUDRATE);
   if (dxl_comm_result == false) {
-    RCLCPP_ERROR(rclcpp::get_logger("read_write_node"), "Failed to set the baudrate!");
+    RCLCPP_ERROR(rclcpp::get_logger(), "Failed to set the baudrate!");
     return -1;
   }
   else {
-    RCLCPP_INFO(rclcpp::get_logger("read_write_node"), "Succeeded to set the baudrate.");
+    RCLCPP_INFO(rclcpp::get_logger(), "Succeeded to set the baudrate.");
   }
 
   // Use Position Control Mode
@@ -59,15 +59,15 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   );
 
   if (dxl_comm_result != COMM_SUCCESS) {
-    RCLCPP_ERROR(rclcpp::get_logger("read_write_node"), "Failed to set Position Control Mode.");
+    RCLCPP_ERROR(rclcpp::get_logger(), "Failed to set Position Control Mode.");
   }
   else {
-    RCLCPP_INFO(rclcpp::get_logger("read_write_node"), "Succeeded to set Position Control Mode.");
+    RCLCPP_INFO(rclcpp::get_logger(), "Succeeded to set Position Control Mode.");
   }
 
   // Enable Torque of DYNAMIXEL
-  dxl_comm_result = packetHandler->write1ByteTxRx(
-    portHandler,
+  dxl_comm_result = this->packetHandler->write1ByteTxRx(
+    this->portHandler,
     BROADCAST_ID,
     ADDR_TORQUE_ENABLE,
     1,
@@ -75,10 +75,10 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   );
 
   if (dxl_comm_result != COMM_SUCCESS) {
-    RCLCPP_ERROR(rclcpp::get_logger("read_write_node"), "Failed to enable torque.");
+    RCLCPP_ERROR(rclcpp::get_logger(), "Failed to enable torque.");
   }
   else {
-    RCLCPP_INFO(rclcpp::get_logger("read_write_node"), "Succeeded to enable torque.");
+    RCLCPP_INFO(rclcpp::get_logger(), "Succeeded to enable torque.");
   }
 
   // Subscriber to receive position commands and write them to the motors
@@ -88,7 +88,7 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
       QOS_RKL10V,
       [this](const PositionCmd::SharedPtr msg) -> void
       {
-          // Position Value of X series is 4 byte data.
+        // Position Value of X series is 4 byte data.
         // For AX & MX(1.0) use 2 byte data(uint16_t) for the Position Value.
         // Motor positions Array
         std::array<uint32_t, 3> motor_positions = {msg->motor1_pos, msg->motor2_pos, msg->motor3_pos};
