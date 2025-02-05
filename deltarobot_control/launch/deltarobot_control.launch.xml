@@ -1,0 +1,8 @@
+<launch>
+<!-- Include the launch files from deltrarobot_kinematics and motor control -->
+  <include file="$(find deltarobot_kinematics)/launch/kinematics.launch.xml"/>
+  <include file="$(find deltarobot_motor_control)/launch/motor.launch.xml"/>
+  <!-- <node pkg="deltarobot_control" exec="delta_control" name="delta_control" output="screen">
+    <param from="$(find deltarobot_control)/config/control.yaml"/>
+  </node> -->
+</launch>
