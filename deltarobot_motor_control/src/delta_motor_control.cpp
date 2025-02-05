@@ -32,21 +32,19 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   // Open Serial Port
   dxl_comm_result = this->portHandler->openPort();
   if (dxl_comm_result == false) {
-    RCLCPP_ERROR(rclcpp::get_logger(), "Failed to open the port!");
-    return -1;
+    RCLCPP_ERROR(this->get_logger(), "Failed to open the port!");
   }
   else {
-    RCLCPP_INFO(rclcpp::get_logger(), "Succeeded to open the port.");
+    RCLCPP_INFO(this->get_logger(), "Succeeded to open the port.");
   }
 
   // Set the baudrate of the serial port (use DYNAMIXEL Baudrate)
   dxl_comm_result = this->portHandler->setBaudRate(BAUDRATE);
   if (dxl_comm_result == false) {
-    RCLCPP_ERROR(rclcpp::get_logger(), "Failed to set the baudrate!");
-    return -1;
+    RCLCPP_ERROR(this->get_logger(), "Failed to set the baudrate!");
   }
   else {
-    RCLCPP_INFO(rclcpp::get_logger(), "Succeeded to set the baudrate.");
+    RCLCPP_INFO(this->get_logger(), "Succeeded to set the baudrate.");
   }
 
   // Use Position Control Mode
@@ -59,10 +57,10 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   );
 
   if (dxl_comm_result != COMM_SUCCESS) {
-    RCLCPP_ERROR(rclcpp::get_logger(), "Failed to set Position Control Mode.");
+    RCLCPP_ERROR(this->get_logger(), "Failed to set Position Control Mode.");
   }
   else {
-    RCLCPP_INFO(rclcpp::get_logger(), "Succeeded to set Position Control Mode.");
+    RCLCPP_INFO(this->get_logger(), "Succeeded to set Position Control Mode.");
   }
 
   // Enable Torque of DYNAMIXEL
@@ -75,14 +73,14 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   );
 
   if (dxl_comm_result != COMM_SUCCESS) {
-    RCLCPP_ERROR(rclcpp::get_logger(), "Failed to enable torque.");
+    RCLCPP_ERROR(this->get_logger(), "Failed to enable torque.");
   }
   else {
-    RCLCPP_INFO(rclcpp::get_logger(), "Succeeded to enable torque.");
+    RCLCPP_INFO(this->get_logger(), "Succeeded to enable torque.");
   }
 
   // Subscriber to receive position commands and write them to the motors
-  position_cmd_subscriber =
+  this->position_cmd_subscriber =
     this->create_subscription<PositionCmd>(
       "set_motor_positions",
       QOS_RKL10V,
@@ -91,7 +89,7 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
         // Position Value of X series is 4 byte data.
         // For AX & MX(1.0) use 2 byte data(uint16_t) for the Position Value.
         // Motor positions Array
-        std::array<uint32_t, 3> motor_positions = {msg->motor1_pos, msg->motor2_pos, msg->motor3_pos};
+        std::array<uint32_t, 3> motor_positions = { (uint32_t)msg->motor1_pos, (uint32_t)msg->motor2_pos, (uint32_t)msg->motor3_pos };
 
         for (uint8_t i = 1; i <= motor_positions.size(); i++) {
           uint8_t dxl_error = 0;
@@ -128,7 +126,7 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   // Service to get the current motor positions
   auto get_positions =
     [this](
-      const std::shared_ptr<GetPositions::Request> request,
+      [[maybe_unused]] const std::shared_ptr<GetPositions::Request> request,
       std::shared_ptr<GetPositions::Response> response) -> void
     {
       // Array of Motor Positions
@@ -166,6 +164,13 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
       response->motor3_position = motor_positions[2];
     };
 
-  get_positions_server = create_service<GetPositions>("get_motor_positions", get_positions);
+  this->get_positions_server = create_service<GetPositions>("get_motor_positions", get_positions);
 
+}
+
+int main(int argc, char* argv[]) {
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<DeltaMotorControl>());
+  rclcpp::shutdown();
+  return 0;
 }

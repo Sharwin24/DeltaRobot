@@ -9,6 +9,7 @@
 #include "rcutils/cmdline_parser.h"
 #include "dynamixel_sdk/dynamixel_sdk.h"
 #include "deltarobot_interfaces/msg/position_cmd.hpp"
+#include "deltarobot_interfaces/srv/get_positions.hpp"
 
 
 class DeltaMotorControl : public rclcpp::Node {
