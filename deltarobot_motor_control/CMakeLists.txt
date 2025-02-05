@@ -26,9 +26,21 @@ ament_target_dependencies(read_write_node
   rclcpp
 )
 
-# target_link_libraries(read_write_node dynamixel_sdk)
+# delta_motor_control
+add_executable(delta_motor_control src/delta_motor_control.cpp)
+ament_target_dependencies(delta_motor_control
+  deltarobot_interfaces
+  dynamixel_sdk
+  rclcpp
+)
+
 install(TARGETS
   read_write_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS
+  delta_motor_control
   DESTINATION lib/${PROJECT_NAME}
 )
 

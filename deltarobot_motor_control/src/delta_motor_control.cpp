@@ -88,65 +88,40 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
       QOS_RKL10V,
       [this](const PositionCmd::SharedPtr msg) -> void
       {
-        uint8_t dxl_error = 0;
-        int dxl_comm_result = COMM_TX_FAIL;
-
-        // Position Value of X series is 4 byte data.
+          // Position Value of X series is 4 byte data.
         // For AX & MX(1.0) use 2 byte data(uint16_t) for the Position Value.
-        uint32_t motor1_position = (unsigned int)msg->motor1_pos;  // Convert int32 -> uint32
-        uint32_t motor2_position = (unsigned int)msg->motor2_pos;  // Convert int32 -> uint32
-        uint32_t motor3_position = (unsigned int)msg->motor3_pos;  // Convert int32 -> uint32
+        // Motor positions Array
+        std::array<uint32_t, 3> motor_positions = {msg->motor1_pos, msg->motor2_pos, msg->motor3_pos};
 
-        // Write Motor 1 position (length : 4 bytes)
-        dxl_comm_result =
-          this->packetHandler->write4ByteTxRx(
-            this->portHandler,
-            1,
-            ADDR_GOAL_POSITION,
-            motor1_position,
-            &dxl_error
-          );
+        for (uint8_t i = 1; i <= motor_positions.size(); i++) {
+          uint8_t dxl_error = 0;
+          int dxl_comm_result = COMM_TX_FAIL;
+          // Write Motor position (length : 4 bytes)
+          dxl_comm_result =
+            this->packetHandler->write4ByteTxRx(
+              this->portHandler,
+              i,
+              ADDR_GOAL_POSITION,
+              motor_positions[i - 1],
+              &dxl_error
+            );
+          // Error Handling
+          if (dxl_comm_result != COMM_SUCCESS) {
+            RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getTxRxResult(dxl_comm_result));
+          }
+          else if (dxl_error != 0) {
+            RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getRxPacketError(dxl_error));
+          }
+        }
+        
+        RCLCPP_DEBUG(
+          this->get_logger(),
+          "Motor Positions Set: Motor1: %d, Motor2: %d, Motor3: %d",
+          msg->motor1_pos,
+          msg->motor2_pos,
+          msg->motor3_pos
+        );
 
-        if (dxl_comm_result != COMM_SUCCESS) {
-          RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getTxRxResult(dxl_comm_result));
-        }
-        else if (dxl_error != 0) {
-          RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getRxPacketError(dxl_error));
-        }
-
-        // Write Motor 2 position (length : 4 bytes)
-        dxl_comm_result =
-          this->packetHandler->write4ByteTxRx(
-            this->portHandler,
-            2,
-            ADDR_GOAL_POSITION,
-            motor2_position,
-            &dxl_error
-          );
-
-        if (dxl_comm_result != COMM_SUCCESS) {
-          RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getTxRxResult(dxl_comm_result));
-        }
-        else if (dxl_error != 0) {
-          RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getRxPacketError(dxl_error));
-        }
-
-        // Write Motor 3 position (length : 4 bytes)
-        dxl_comm_result =
-          this->packetHandler->write4ByteTxRx(
-            this->portHandler,
-            3,
-            ADDR_GOAL_POSITION,
-            motor3_position,
-            &dxl_error
-          );
-
-        if (dxl_comm_result != COMM_SUCCESS) {
-          RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getTxRxResult(dxl_comm_result));
-        }
-        else if (dxl_error != 0) {
-          RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getRxPacketError(dxl_error));
-        }
       }
     );
   
@@ -156,50 +131,39 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
       const std::shared_ptr<GetPositions::Request> request,
       std::shared_ptr<GetPositions::Response> response) -> void
     {
-      uint8_t dxl_error = 0;
-      int dxl_comm_result = COMM_TX_FAIL;
+      // Array of Motor Positions
+      std::array<int, 3> motor_positions{};
 
-      int motor1 = 0;
-      int motor2 = 0;
-      int motor3 = 0;
-
-      // Read Present Position (length : 4 bytes) and Convert uint32 -> int32
-      // When reading 2 byte data from AX / MX(1.0), use read2ByteTxRx() instead.
-      dxl_comm_result = this->packetHandler->read4ByteTxRx(
-        this->portHandler,
-        1,
-        ADDR_PRESENT_POSITION,
-        reinterpret_cast<uint32_t*>(&motor1),
-        &dxl_error
-      );
-
-      dxl_comm_result = this->packetHandler->read4ByteTxRx(
-        this->portHandler,
-        2,
-        ADDR_PRESENT_POSITION,
-        reinterpret_cast<uint32_t*>(&motor2),
-        &dxl_error
-      );
-
-      dxl_comm_result = this->packetHandler->read4ByteTxRx(
-        this->portHandler,
-        3,
-        ADDR_PRESENT_POSITION,
-        reinterpret_cast<uint32_t*>(&motor3),
-        &dxl_error
-      );
+      for (uint8_t i = 1; i <= motor_positions.size(); i++) {
+        uint8_t dxl_error = 0;
+        int dxl_comm_result = COMM_TX_FAIL;
+        // Read Present Position (length : 4 bytes) and Convert uint32 -> int32
+        // When reading 2 byte data from AX / MX(1.0), use read2ByteTxRx() instead.
+        dxl_comm_result = this->packetHandler->read4ByteTxRx(
+          this->portHandler,
+          i,
+          ADDR_PRESENT_POSITION,
+          reinterpret_cast<uint32_t*>(&motor_positions[i - 1]),
+          &dxl_error
+        );
+        // Error Handling
+        if (dxl_comm_result != COMM_SUCCESS) {
+          RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getTxRxResult(dxl_comm_result));
+        }
+        else if (dxl_error != 0) {
+          RCLCPP_INFO(this->get_logger(), "%s", this->packetHandler->getRxPacketError(dxl_error));
+        }
+      }
 
       RCLCPP_INFO(
         this->get_logger(),
         "Motor Positions: Motor1: %d, Motor2: %d, Motor3: %d",
-        motor1,
-        motor2,
-        motor3
+        motor_positions[0], motor_positions[1], motor_positions[2]
       );
 
-      response->motor1_position = motor1;
-      response->motor2_position = motor2;
-      response->motor3_position = motor3;
+      response->motor1_position = motor_positions[0];
+      response->motor2_position = motor_positions[1];
+      response->motor3_position = motor_positions[2];
     };
 
   get_positions_server = create_service<GetPositions>("get_motor_positions", get_positions);
