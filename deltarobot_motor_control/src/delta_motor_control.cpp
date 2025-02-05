@@ -132,7 +132,7 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
       std::shared_ptr<GetPositions::Response> response) -> void
     {
       // Array of Motor Positions
-      std::array<int, 3> motor_positions{};
+      std::array<int, 3> motor_positions = {0, 0, 0};
 
       for (uint8_t i = 1; i <= motor_positions.size(); i++) {
         uint8_t dxl_error = 0;
