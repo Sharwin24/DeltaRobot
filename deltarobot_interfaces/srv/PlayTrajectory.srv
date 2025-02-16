@@ -1,0 +1,4 @@
+float32 duration # Duration of the trajectory in seconds
+DynamixelTrajectory trajectory # Trajectory to execute
+---
+bool success # True if the trajectory was executed successfully
