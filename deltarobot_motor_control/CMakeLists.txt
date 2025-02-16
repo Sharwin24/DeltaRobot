@@ -18,14 +18,6 @@ include_directories(
   ${deltarobot_interfaces_INCLUDE_DIRS}
 )
 
-# Read/Write Node (Example from Dynamixel SDK)
-add_executable(read_write_node src/read_write_node.cpp)
-ament_target_dependencies(read_write_node
-  dynamixel_sdk_custom_interfaces
-  dynamixel_sdk
-  rclcpp
-)
-
 # delta_motor_control
 add_executable(delta_motor_control src/delta_motor_control.cpp)
 ament_target_dependencies(delta_motor_control
