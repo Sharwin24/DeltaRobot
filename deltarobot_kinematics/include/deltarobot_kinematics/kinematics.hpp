@@ -38,12 +38,6 @@ private:
 
   /// @brief Passive Link Width [mm]
   float PW;
-
-  // Kinematics Variables
-  float WB;
-  float UB;
-  float WP;
-  float UP;
 };
 
 #endif  // KINEMATICS_HPP_

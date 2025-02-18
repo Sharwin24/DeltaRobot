@@ -34,12 +34,6 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   this->PL = this->get_parameter("passive_link_length").as_double();
   this->PW = this->get_parameter("passive_link_width").as_double();
 
-  // Update Kinematics Variables
-  this->WB = (sqrt3 / 6) * this->SB;
-  this->UB = (sqrt3 / 3) * this->SB;
-  this->WP = (sqrt3 / 6) * this->SP;
-  this->UP = (sqrt3 / 3) * this->SP;
-
   // Create FK and IK servers
   delta_fk_server = create_service<DeltaFK>(
     "delta_fk", 
