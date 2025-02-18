@@ -8,19 +8,19 @@
 
 typedef struct {
   /// @brief Base Triangle Side Length [mm]
-  double BL;
+  float SB;
+
+  /// @brief End Effector Platform Triangle Side Length [mm]
+  float SP;
 
   /// @brief Active Link Length [mm]
-  double LL;
+  float AL;
 
   /// @brief Passive Link Length [mm]
-  double PL;
+  float PL;
 
   /// @brief Passive Link Width [mm]
-  double PW;
-
-  /// @brief End Effector Triangle Side Length [mm]
-  double EEL;
+  float PW;
 } DeltaConfig;
 
 

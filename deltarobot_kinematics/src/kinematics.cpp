@@ -12,30 +12,19 @@
 ///   ~/delta_fk (deltarobot_interfaces::srv::DeltaFK): Computes the end effector position given the joint angles (forward kinematics)
 ///   ~/delta_ik (deltarobot_interfaces::srv::DeltaIK): Computes the joint angles given the end effector position (inverse kinematics)
 
-#include "kinematics.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "include/deltarobot_kinematics/kinematics.hpp"
+#include "rclcpp/node_options.hpp"
 
 DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   RCLCPP_INFO(this->get_logger(), "DeltaKinematics Started");
 
-  // this->declare_parameter("qos_depth", 10);
-  // int8_t qos_depth = 0;
-  // this->get_parameter("qos_depth", qos_depth);
-
-  // const auto QOS_RKL10V = rclcpp::QoS(rclcpp::KeepLast(qos_depth)).reliable().durability_volatile();
-
-  // Declare parameters from yaml file
-  this->declare_parameter("base_triangle_side_length", 180.0);
-  this->declare_parameter("active_link_length", 120.0);
-  this->declare_parameter("passive_link_length", 106.0);
-  this->declare_parameter("passive_link_width", 20.0);
-  this->declare_parameter("end_effector_side_length", 60.0);
-
-  // Save parameters to struct for easy access
-  this->robot_config.BL = this->get_parameter("base_triangle_side_length").as_double();
-  this->robot_config.LL = this->get_parameter("active_link_length").as_double();
+  // Save parameters from yaml to struct for easy access
+  this->robot_config.SB = this->get_parameter("base_triangle_side_length").as_double();
+  this->robot_config.SP = this->get_parameter("end_effector_side_length").as_double();
+  this->robot_config.AL = this->get_parameter("active_link_length").as_double();
   this->robot_config.PL = this->get_parameter("passive_link_length").as_double();
   this->robot_config.PW = this->get_parameter("passive_link_width").as_double();
-  this->robot_config.EEL = this->get_parameter("end_effector_side_length").as_double();
 
   // Create FK and IK servers
   delta_fk_server = create_service<DeltaFK>(
