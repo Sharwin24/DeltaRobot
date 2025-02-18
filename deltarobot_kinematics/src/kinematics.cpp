@@ -13,18 +13,32 @@
 ///   ~/delta_ik (deltarobot_interfaces::srv::DeltaIK): Computes the joint angles given the end effector position (inverse kinematics)
 
 #include "rclcpp/rclcpp.hpp"
-#include "include/deltarobot_kinematics/kinematics.hpp"
+#include "kinematics.hpp"
 #include "rclcpp/node_options.hpp"
+
+const float sqrt3 = sqrt(3.0);
+constexpr float pi = 3.141592653;    // PI
+const float sin120 = sqrt3 / 2.0;
+constexpr float cos120 = -0.5;
+const float tan60 = sqrt3;
+constexpr float sin30 = 0.5;
+const float tan30 = 1 / sqrt3;
 
 DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   RCLCPP_INFO(this->get_logger(), "DeltaKinematics Started");
 
-  // Save parameters from yaml to struct for easy access
-  this->robot_config.SB = this->get_parameter("base_triangle_side_length").as_double();
-  this->robot_config.SP = this->get_parameter("end_effector_side_length").as_double();
-  this->robot_config.AL = this->get_parameter("active_link_length").as_double();
-  this->robot_config.PL = this->get_parameter("passive_link_length").as_double();
-  this->robot_config.PW = this->get_parameter("passive_link_width").as_double();
+  // Save parameters from yaml for easy access
+  this->SB = this->get_parameter("base_triangle_side_length").as_double();
+  this->SP = this->get_parameter("end_effector_side_length").as_double();
+  this->AL = this->get_parameter("active_link_length").as_double();
+  this->PL = this->get_parameter("passive_link_length").as_double();
+  this->PW = this->get_parameter("passive_link_width").as_double();
+
+  // Update Kinematics Variables
+  this->WB = (sqrt3 / 6) * this->SB;
+  this->UB = (sqrt3 / 3) * this->SB;
+  this->WP = (sqrt3 / 6) * this->SP;
+  this->UP = (sqrt3 / 3) * this->SP;
 
   // Create FK and IK servers
   delta_fk_server = create_service<DeltaFK>(
@@ -39,14 +53,9 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
 
 void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response) {
   // Locally save the request data (joint angles)
-  double j1 = request->link1_angle;
-  double j2 = request->link2_angle;
-  double j3 = request->link3_angle;
-  j1 = j1 * M_PI / 180.0;
-  j2 = j2 * M_PI / 180.0;
-  j3 = j3 * M_PI / 180.0;
-
-  //TODO: Implement forward kinematics
+  float j1 = request->link1_angle;
+  float j2 = request->link2_angle;
+  float j3 = request->link3_angle;
 
   // Update the response data (end effector position)
   response->x = 0.0;
@@ -55,19 +64,48 @@ void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> 
 }
 void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response) {
   // Locally save the request data (end effector position)
-  double x = request->x;
-  double y = request->y;
-  double z = request->z;
-  x = x * M_PI / 180.0;
-  y = y * M_PI / 180.0;
-  z = z * M_PI / 180.0;
+  float x = request->x; // [mm]
+  float y = request->y; // [mm]
+  float z = request->z; // [mm]
 
-  //TODO: Implement inverse kinematics
+  // Tangent Half Angle Substitution
+  const float A = this->WB - this->UP;
+  const float B = (this->SP / 2) - ((sqrt3 / 2) * this->WP);
+  const float C = this->WP - (this->WB / 2);
+
+  /// Tangent Half Angle Coefficients
+  const float E[3] = {
+    2 * this->config.AL*(y+A),
+    -AL * (sqrt3 * (x+B) + y + C),
+    AL * (sqrt3 * (x-B) - y - C)
+  }
+  const float F = 2 * z * this->AL
+
+  const float G[3] = {
+    x*x + y*y + z*z + A + this->AL*this->AL + 2*y*A - this->PL*this->PL,
+    x*x + y*y + z*z + B + this->AL*this->AL + 2*(x*B+y*C) - this->PL*this->PL,
+    x*x + y*y + z*z + B + this->AL*this->AL + 2*(-x*B-y*C) - this->PL*this->PL
+  }
+
+  float thetas[3] = {0.0, 0.0, 0.0};
+  for (uint8_t i = 0; i < count; i++) {
+    float D = E[i]*E[i] + F[i]*F[i] - G[i]*G[i];
+    float theta_plus = (-F[i] + sqrt(D)) / (G[i] - E[i]);
+    float theta_minus = (-F[i] - sqrt(D)) / (G[i] - E[i]);
+    theta_plus = 2 * atan(theta_plus);
+    theta_minus = 2 * atan(theta_minus);
+    // Pick the solution with the knees "kinked out", the angle should be closer to zero
+    if (abs(theta_plus) < abs(theta_minus)) {
+      thetas[i] = theta_plus;
+    } else {
+      thetas[i] = theta_minus;
+    }
+  }
 
   // Update the response data (joint angles)
-  response->link1_angle = 0.0;
-  response->link2_angle = 0.0;
-  response->link3_angle = 0.0;
+  response->link1_angle = thetas[0];
+  response->link2_angle = thetas[1];
+  response->link3_angle = thetas[2];
 }
 
 int main(int argc, char * argv[]) {

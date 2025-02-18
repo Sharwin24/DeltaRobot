@@ -4,25 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "deltarobot_interfaces/srv/delta_fk.hpp"
 #include "deltarobot_interfaces/srv/delta_ik.hpp"
-
-
-typedef struct {
-  /// @brief Base Triangle Side Length [mm]
-  float SB;
-
-  /// @brief End Effector Platform Triangle Side Length [mm]
-  float SP;
-
-  /// @brief Active Link Length [mm]
-  float AL;
-
-  /// @brief Passive Link Length [mm]
-  float PL;
-
-  /// @brief Passive Link Width [mm]
-  float PW;
-} DeltaConfig;
-
+#include <math.h>
 
 class DeltaKinematics : public rclcpp::Node {
 public:
@@ -39,7 +21,26 @@ private:
   void forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response);
   void inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response);
   
-  DeltaConfig robot_config;
+  /// @brief Base Triangle Side Length [mm]
+  float SB;
+
+  /// @brief End Effector Platform Triangle Side Length [mm]
+  float SP;
+
+  /// @brief Active Link Length [mm]
+  float AL;
+
+  /// @brief Passive Link Length [mm]
+  float PL;
+
+  /// @brief Passive Link Width [mm]
+  float PW;
+
+  // Kinematics Variables
+  float WB;
+  float UB;
+  float WP;
+  float UP;
 };
 
 #endif  // KINEMATICS_HPP_

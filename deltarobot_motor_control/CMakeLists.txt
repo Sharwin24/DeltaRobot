@@ -27,11 +27,6 @@ ament_target_dependencies(delta_motor_control
 )
 
 install(TARGETS
-  read_write_node
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-install(TARGETS
   delta_motor_control
   DESTINATION lib/${PROJECT_NAME}
 )
