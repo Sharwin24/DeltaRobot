@@ -53,14 +53,54 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
 
 void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response) {
   // Locally save the request data (joint angles)
-  float j1 = request->link1_angle;
-  float j2 = request->link2_angle;
-  float j3 = request->link3_angle;
+  float theta1 = request->link1_angle;
+  float theta2 = request->link2_angle;
+  float theta3 = request->link3_angle;
+  float x = 0.0;
+  float y = 0.0;
+  float z = 0.0;
+
+  float t = (this->SB - this->SP) * tan30 / 2;
+  float y1 = -(t + this->AL * cos(theta1));
+  float z1 = -this->AL * sin(theta1);
+  float y2 = (t + this->AL * cos(theta2)) * sin30;
+  float x2 = y2 * tan60;
+  float z2 = -this->AL * sin(theta2);
+  float y3 = (t + this->AL * cos(theta3)) * sin30;
+  float x3 = -y3 * tan60;
+  float z3 = -this->AL * sin(theta3);
+  float dnm = (y2 - y1) * x3 - (y3 - y1) * x2;
+  float w1 = y1 * y1 + z1 * z1;
+  float w2 = x2 * x2 + y2 * y2 + z2 * z2;
+  float w3 = x3 * x3 + y3 * y3 + z3 * z3;
+
+  // x = (a1*z + b1)/dnm
+  float a1 = (z2 - z1) * (y3 - y1) - (z3 - z1) * (y2 - y1);
+  float b1 = -((w2 - w1) * (y3 - y1) - (w3 - w1) * (y2 - y1)) / 2.0;
+
+  // y = (a2*z + b2)/dnm;
+  float a2 = -(z2 - z1) * x3 + (z3 - z1) * x2;
+  float b2 = ((w2 - w1) * x3 - (w3 - w1) * x2) / 2.0;
+
+  // a*z^2 + b*z + c = 0
+  float a = a1 * a1 + a2 * a2 + dnm * dnm;
+  float b = 2 * (a1 * b1 + a2 * (b2 - y1 * dnm) - z1 * dnm * dnm);
+  float c = (b2 - y1 * dnm) * (b2 - y1 * dnm) + b1 * b1 + dnm * dnm * (z1 * z1 - this->PL * this->PL);
+
+  // discriminant
+  float d = b * b - (float)4.0 * a * c;
+  if (d < 0) {
+    RCLCPP_ERROR(this->get_logger(), "DeltaFK: Invalid Configuration (%f, %f, %f) [rad]", theta1, theta2, theta3);
+  } else {
+    z = (-b + sqrt(d)) / (2*a);
+    x = (a1 * z + b1) / dnm;
+    y = (a2 * z + b2) / dnm;
+  }
 
   // Update the response data (end effector position)
-  response->x = 0.0;
-  response->y = 0.0;
-  response->z = 0.0;
+  response->x = x; // [mm]
+  response->y = y; // [mm]
+  response->z = z; // [mm]
 }
 
 int DeltaKinematics::deltaFK_AngleYZ(float x0, float y0, float z0, float& theta) {
@@ -75,7 +115,7 @@ int DeltaKinematics::deltaFK_AngleYZ(float x0, float y0, float z0, float& theta)
   if (d < 0) return -1; // non-existing point
   float yj = (y1 - a * b - sqrt(d)) / (b * b + 1); // choosing outer point
   float zj = a + b * yj;
-  theta = 180.0 * atan(-zj / (y1 - yj)) / pi + ((yj > y1) ? 180.0 : 0.0);
+  theta = atan(-zj / (y1 - yj)) + ((yj > y1) ? pi : 0.0);
   return 0;
 }
 
@@ -84,7 +124,6 @@ void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> 
   float x = request->x; // [mm]
   float y = request->y; // [mm]
   float z = request->z; // [mm]
-
   float theta1 = 0.0;
   float theta2 = 0.0;
   float theta3 = 0.0;
@@ -93,18 +132,18 @@ void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> 
   if (status == 0) {
     status = this->deltaFK_AngleYZ(x * cos120 + y * sin120, y * cos120 - x * sin120, z, theta2);  // rotate coords to +120 deg
   } else {
-    RCLCPP_ERROR(this->get_logger(), "DeltaIK: Non-existing point (%f, %f, %f)", x, y, z);
+    RCLCPP_ERROR(this->get_logger(), "DeltaIK: Non-existing point (%f, %f, %f) [mm]", x, y, z);
   }
   if (status == 0) {
     status = this->deltaFK_AngleYZ(x * cos120 - y * sin120, y * cos120 + x * sin120, z, theta3);  // rotate coords to -120 deg
   } else {
-    RCLCPP_ERROR(this->get_logger(), "DeltaIK: Non-existing point (%f, %f, %f)", x, y, z);
+    RCLCPP_ERROR(this->get_logger(), "DeltaIK: Non-existing point (%f, %f, %f) [mm]", x, y, z);
   }
 
   // Update the response data (joint angles)
-  response->link1_angle = theta1;
-  response->link2_angle = theta2;
-  response->link3_angle = theta3;
+  response->link1_angle = theta1; // [rad]
+  response->link2_angle = theta2; // [rad]
+  response->link3_angle = theta3; // [rad]
 }
 
 int main(int argc, char * argv[]) {
