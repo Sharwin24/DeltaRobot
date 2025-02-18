@@ -20,6 +20,9 @@ private:
   
   void forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response);
   void inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response);
+
+  // Helper function for FK to find active link angle when normal to the link's rotation axis (YZ-plane)
+  int deltaFK_AngleYZ(float x0, float y0, float z0, float& theta);
   
   /// @brief Base Triangle Side Length [mm]
   float SB;

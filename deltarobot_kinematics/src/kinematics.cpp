@@ -62,64 +62,49 @@ void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> 
   response->y = 0.0;
   response->z = 0.0;
 }
+
+int DeltaKinematics::deltaFK_AngleYZ(float x0, float y0, float z0, float& theta) {
+  float halfBase = 0.5 * this->SB;
+  float y1 = -halfBase * tan30; // Half base * tan(30)
+  y0 -= halfBase * this->SP;    // shift center to edge
+  // z = a + b*y
+  float a = (x0 * x0 + y0 * y0 + z0 * z0 + this->AL * this->AL - this->PL * this->PL - y1 * y1) / (2 * z0);
+  float b = (y1 - y0) / z0;
+  // discriminant
+  float d = -(a + b * y1) * (a + b * y1) + this->AL * (b * b * this->AL + this->AL);
+  if (d < 0) return -1; // non-existing point
+  float yj = (y1 - a * b - sqrt(d)) / (b * b + 1); // choosing outer point
+  float zj = a + b * yj;
+  theta = 180.0 * atan(-zj / (y1 - yj)) / pi + ((yj > y1) ? 180.0 : 0.0);
+  return 0;
+}
+
 void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response) {
   // Locally save the request data (end effector position)
   float x = request->x; // [mm]
   float y = request->y; // [mm]
   float z = request->z; // [mm]
 
-  // Tangent Half Angle Substitution
-  const float A = this->WB - this->UP;
-  const float B = (this->SP / 2) - ((sqrt3 / 2) * this->WP);
-  const float C = this->WP - (this->WB / 2);
+  float theta1 = 0.0;
+  float theta2 = 0.0;
+  float theta3 = 0.0;
 
-  /// Tangent Half Angle Coefficients
-  const float E[3] = {
-    2 * this->AL*(y+A),
-    -AL * (sqrt3 * (x+B) + y + C),
-    AL * (sqrt3 * (x-B) - y - C)
-  };
-
-  const float F = 2 * z * this->AL;
-
-  const float r2 = x*x + y*y + z*z;
-  const float AL2 = this->AL * this->AL;
-  const float PL2 = this->PL * this->PL;
-  const float G[3] = {
-    r2 + A + AL2 + 2*y*A - PL2,
-    r2 + B + AL2 + 2*(x*B+y*C) - PL2,
-    r2 + B + AL2 + 2*(-x*B-y*C) - PL2
-  };
-
-  float thetas[3] = {0.0, 0.0, 0.0};
-  for (uint8_t i = 0; i < 3; i++) {
-    float D = E[i]*E[i] + F*F - G[i]*G[i];
-    if (D < 0) {
-      // Non-existing point
-      RCLCPP_ERROR(this->get_logger(), "Delta IK: Non-existing point -> (x: %f, y: %f, z: %f)", x, y, z);
-      thetas[0] = 0.0;
-      thetas[1] = 0.0;
-      thetas[2] = 0.0;
-      thetas[i] = -1.0; // Error flag
-      break;
-    }
-    float sqrtD = sqrt(D);
-    float theta_plus = (-F + sqrtD) / (G[i] - E[i]);
-    float theta_minus = (-F - sqrtD) / (G[i] - E[i]);
-    theta_plus = 2 * atan(theta_plus);
-    theta_minus = 2 * atan(theta_minus);
-    // Pick the solution with the knees "kinked out", the angle should be closer to zero
-    if (abs(theta_plus) < abs(theta_minus)) {
-      thetas[i] = theta_plus;
-    } else {
-      thetas[i] = theta_minus;
-    }
+  int status = this->deltaFK_AngleYZ(x, y, z, theta1);
+  if (status == 0) {
+    status = this->deltaFK_AngleYZ(x * cos120 + y * sin120, y * cos120 - x * sin120, z, theta2);  // rotate coords to +120 deg
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "DeltaIK: Non-existing point (%f, %f, %f)", x, y, z);
+  }
+  if (status == 0) {
+    status = this->deltaFK_AngleYZ(x * cos120 - y * sin120, y * cos120 + x * sin120, z, theta3);  // rotate coords to -120 deg
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "DeltaIK: Non-existing point (%f, %f, %f)", x, y, z);
   }
 
   // Update the response data (joint angles)
-  response->link1_angle = thetas[0];
-  response->link2_angle = thetas[1];
-  response->link3_angle = thetas[2];
+  response->link1_angle = theta1;
+  response->link2_angle = theta2;
+  response->link3_angle = theta3;
 }
 
 int main(int argc, char * argv[]) {
