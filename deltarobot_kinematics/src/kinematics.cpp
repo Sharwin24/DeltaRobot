@@ -75,23 +75,37 @@ void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> 
 
   /// Tangent Half Angle Coefficients
   const float E[3] = {
-    2 * this->config.AL*(y+A),
+    2 * this->AL*(y+A),
     -AL * (sqrt3 * (x+B) + y + C),
     AL * (sqrt3 * (x-B) - y - C)
-  }
-  const float F = 2 * z * this->AL
+  };
 
+  const float F = 2 * z * this->AL;
+
+  const float r2 = x*x + y*y + z*z;
+  const float AL2 = this->AL * this->AL;
+  const float PL2 = this->PL * this->PL;
   const float G[3] = {
-    x*x + y*y + z*z + A + this->AL*this->AL + 2*y*A - this->PL*this->PL,
-    x*x + y*y + z*z + B + this->AL*this->AL + 2*(x*B+y*C) - this->PL*this->PL,
-    x*x + y*y + z*z + B + this->AL*this->AL + 2*(-x*B-y*C) - this->PL*this->PL
-  }
+    r2 + A + AL2 + 2*y*A - PL2,
+    r2 + B + AL2 + 2*(x*B+y*C) - PL2,
+    r2 + B + AL2 + 2*(-x*B-y*C) - PL2
+  };
 
   float thetas[3] = {0.0, 0.0, 0.0};
-  for (uint8_t i = 0; i < count; i++) {
-    float D = E[i]*E[i] + F[i]*F[i] - G[i]*G[i];
-    float theta_plus = (-F[i] + sqrt(D)) / (G[i] - E[i]);
-    float theta_minus = (-F[i] - sqrt(D)) / (G[i] - E[i]);
+  for (uint8_t i = 0; i < 3; i++) {
+    float D = E[i]*E[i] + F*F - G[i]*G[i];
+    if (D < 0) {
+      // Non-existing point
+      RCLCPP_ERROR(this->get_logger(), "Delta IK: Non-existing point -> (x: %f, y: %f, z: %f)", x, y, z);
+      thetas[0] = 0.0;
+      thetas[1] = 0.0;
+      thetas[2] = 0.0;
+      thetas[i] = -1.0; // Error flag
+      break;
+    }
+    float sqrtD = sqrt(D);
+    float theta_plus = (-F + sqrtD) / (G[i] - E[i]);
+    float theta_minus = (-F - sqrtD) / (G[i] - E[i]);
     theta_plus = 2 * atan(theta_plus);
     theta_minus = 2 * atan(theta_minus);
     // Pick the solution with the knees "kinked out", the angle should be closer to zero
