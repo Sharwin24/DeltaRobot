@@ -14,9 +14,9 @@
 #define DEVICE_NAME "/dev/ttyUSB0"  // [Linux]: "/dev/ttyUSB*", [Windows]: "COM*"
 
 // Converting from degrees to motor position
-#define UP_POS 2800.0f // [motor ticks]
+#define UP_POS 3073.0f // [motor ticks]
 #define THETA_MAX (M_PI / 2.0f) // [rad]
-#define DOWN_POS 2100.0f // [motor ticks]
+#define DOWN_POS 2048.0f // [motor ticks] this value is THETA_MAX in motor ticks
 #define RAD_TO_MOTOR_TICKS ((DOWN_POS - UP_POS) / THETA_MAX)
 
 DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
