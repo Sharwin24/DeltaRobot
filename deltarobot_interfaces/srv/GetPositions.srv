@@ -1,5 +1,0 @@
-# Empty Request
----
-int32 motor1_position
-int32 motor2_position
-int32 motor3_position

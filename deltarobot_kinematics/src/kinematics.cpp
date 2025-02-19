@@ -17,7 +17,6 @@
 #include "rclcpp/node_options.hpp"
 
 const float sqrt3 = sqrt(3.0);
-constexpr float pi = 3.141592653;    // PI
 const float sin120 = sqrt3 / 2.0;
 constexpr float cos120 = -0.5;
 const float tan60 = sqrt3;
@@ -47,9 +46,9 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
 
 void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response) {
   // Locally save the request data (joint angles)
-  float theta1 = request->link1_angle;
-  float theta2 = request->link2_angle;
-  float theta3 = request->link3_angle;
+  float theta1 = request->joint_angles.theta1;
+  float theta2 = request->joint_angles.theta2;
+  float theta3 = request->joint_angles.theta3;
   float x = 0.0;
   float y = 0.0;
   float z = 0.0;
@@ -108,7 +107,7 @@ int DeltaKinematics::deltaFK_AngleYZ(float x0, float y0, float z0, float& theta)
   if (d < 0) return -1; // non-existing point
   float yj = (y1 - a * b - sqrt(d)) / (b * b + 1); // choosing outer point
   float zj = a + b * yj;
-  theta = atan(-zj / (y1 - yj)) + ((yj > y1) ? pi : 0.0);
+  theta = atan(-zj / (y1 - yj)) + ((yj > y1) ? M_PI : 0.0);
   return 0;
 }
 
@@ -134,9 +133,9 @@ void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> 
   }
 
   // Update the response data (joint angles)
-  response->link1_angle = theta1; // [rad]
-  response->link2_angle = theta2; // [rad]
-  response->link3_angle = theta3; // [rad]
+  response->joint_angles.theta1 = theta1; // [rad]
+  response->joint_angles.theta2 = theta2; // [rad]
+  response->joint_angles.theta3 = theta3; // [rad]
 }
 
 int main(int argc, char * argv[]) {

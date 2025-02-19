@@ -80,17 +80,19 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   }
 
   // Subscriber to receive position commands and write them to the motors
-  this->position_cmd_subscriber =
-    this->create_subscription<PositionCmd>(
+  this->delta_joints_sub =
+    this->create_subscription<DeltaJoints>(
       "set_motor_positions",
       QOS_RKL10V,
-      [this](const PositionCmd::SharedPtr msg) -> void
+      [this](const DeltaJoints::SharedPtr msg) -> void
       {
+        std::array<uint32_t, 3> motor_positions = {
+          convertToMotorPosition(msg->theta1),
+          convertToMotorPosition(msg->theta2),
+          convertToMotorPosition(msg->theta3)
+        };
         // Position Value of X series is 4 byte data.
         // For AX & MX(1.0) use 2 byte data(uint16_t) for the Position Value.
-        // Motor positions Array
-        std::array<uint32_t, 3> motor_positions = { (uint32_t)msg->motor1_pos, (uint32_t)msg->motor2_pos, (uint32_t)msg->motor3_pos };
-
         for (uint8_t i = 1; i <= motor_positions.size(); i++) {
           uint8_t dxl_error = 0;
           int dxl_comm_result = COMM_TX_FAIL;
@@ -115,9 +117,9 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
         RCLCPP_DEBUG(
           this->get_logger(),
           "Motor Positions Set: Motor1: %d, Motor2: %d, Motor3: %d",
-          msg->motor1_pos,
-          msg->motor2_pos,
-          msg->motor3_pos
+          motor_positions[0],
+          motor_positions[1],
+          motor_positions[2]
         );
 
       }
@@ -166,6 +168,14 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
 
   this->get_positions_server = create_service<GetPositions>("get_motor_positions", get_positions);
 
+}
+
+uint32_t DeltaMotorControl::convertToMotorPosition(float theta) {
+  // Convert theta [rad] to motor position [0, 4096)
+  // 2048 is the "zero" position and is when the link is at pi/2 radians (90 deg)
+  // 2800 is the "up" position when the link is at 0 radians (0 deg)
+  // theta = 0 -> 2800; theta = pi/2 -> 2048; theta = pi/4 -> 2424 (halfway between 2800 and 2048)
+  return static_cast<uint32_t>(2048 - (theta * 4096 / (2 * M_PI)));
 }
 
 int main(int argc, char* argv[]) {

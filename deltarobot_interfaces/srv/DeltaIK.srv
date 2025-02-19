@@ -2,6 +2,4 @@ float64 x # [mm]
 float64 y # [mm]
 float64 z # [mm]
 ---
-float64 link1_angle # [rad]
-float64 link2_angle # [rad]
-float64 link3_angle # [rad]
+DeltaJoints joint_angles

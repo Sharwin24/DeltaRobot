@@ -31,10 +31,14 @@ if(BUILD_TESTING)
 endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/PositionCmd.msg"
+  "msg/DeltaJoints.msg"
+  "msg/FKTrajectory.msg"
+  "msg/IKTrajectory.msg"
   "srv/DeltaFK.srv"
   "srv/DeltaIK.srv"
-  "srv/GetPositions.srv"
+  "srv/GetDynamixelPositions.srv"
+  "srv/PlayFKTrajectory.srv"
+  "srv/PlayIKTrajectory.srv"
   DEPENDENCIES builtin_interfaces
 )
 
