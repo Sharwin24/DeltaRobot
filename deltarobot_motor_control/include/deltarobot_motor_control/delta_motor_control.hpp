@@ -20,7 +20,6 @@ public:
   DeltaMotorControl();
   ~DeltaMotorControl() = default;
 
-  
   private:
   rclcpp::Subscription<DeltaJoints>::SharedPtr delta_joints_sub;
   rclcpp::Service<GetPositions>::SharedPtr get_positions_server;
