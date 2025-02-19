@@ -13,6 +13,10 @@
 #define BAUDRATE 57600  // Default Baudrate of DYNAMIXEL X series
 #define DEVICE_NAME "/dev/ttyUSB0"  // [Linux]: "/dev/ttyUSB*", [Windows]: "COM*"
 
+// Converting from degrees to motor position
+#define UP_POSITION 2800.0f // [motor ticks]
+#define RAD_TO_MOTOR_TICKS (1504.0f / M_PI)
+
 DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   RCLCPP_INFO(this->get_logger(), "DeltaMotorControl Started");
 
@@ -175,7 +179,8 @@ uint32_t DeltaMotorControl::convertToMotorPosition(float theta) {
   // 2048 is the "zero" position and is when the link is at pi/2 radians (90 deg)
   // 2800 is the "up" position when the link is at 0 radians (0 deg)
   // theta = 0 -> 2800; theta = pi/2 -> 2048; theta = pi/4 -> 2424 (halfway between 2800 and 2048)
-  return static_cast<uint32_t>(2048 - (theta * 4096 / (2 * M_PI)));
+  float motor_pos = UP_POSITION - (RAD_TO_MOTOR_TICKS * theta);
+  return static_cast<uint32_t>(motor_pos);
 }
 
 int main(int argc, char* argv[]) {
