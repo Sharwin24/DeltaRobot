@@ -32,6 +32,8 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   this->AL = this->get_parameter("active_link_length").as_double();
   this->PL = this->get_parameter("passive_link_length").as_double();
   this->PW = this->get_parameter("passive_link_width").as_double();
+  this->JMin = this->get_parameter("joint_min").as_double();
+  this->JMax = this->get_parameter("joint_max").as_double();
 
   // Create FK and IK servers
   delta_fk_server = create_service<DeltaFK>(

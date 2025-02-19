@@ -38,6 +38,12 @@ private:
 
   /// @brief Passive Link Width [mm]
   float PW;
+
+  /// @brief Joint Angle Min [rad]
+  float JMin;
+
+  /// @brief Joint Angle Max [rad]
+  float JMax;
 };
 
 #endif  // KINEMATICS_HPP_
