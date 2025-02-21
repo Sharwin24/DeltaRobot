@@ -1,5 +1,5 @@
 <launch>
   <node pkg="deltarobot_kinematics" exec="kinematics" name="delta_kinematics" >
-    <param from="$(find-pkg-share deltarobot_kinematics)/delta_config.yaml"/>
+    <param from="$(find-pkg-share deltarobot_kinematics)/config/delta_config.yaml"/>
   </node>
 </launch>

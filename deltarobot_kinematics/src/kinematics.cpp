@@ -26,6 +26,15 @@ const float tan30 = 1 / sqrt3;
 DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   RCLCPP_INFO(this->get_logger(), "DeltaKinematics Started");
 
+  // Declare parameters
+  this->declare_parameter("base_triangle_side_length", 200.0);
+  this->declare_parameter("end_effector_side_length", 100.0);
+  this->declare_parameter("active_link_length", 100.0);
+  this->declare_parameter("passive_link_length", 100.0);
+  this->declare_parameter("passive_link_width", 30.0);
+  this->declare_parameter("joint_min", 0.0);
+  this->declare_parameter("joint_max", M_PI / 2.0);
+
   // Save parameters from yaml for easy access
   this->SB = this->get_parameter("base_triangle_side_length").as_double();
   this->SP = this->get_parameter("end_effector_side_length").as_double();

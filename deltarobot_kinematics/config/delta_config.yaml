@@ -3,7 +3,7 @@
     base_triangle_side_length: 261.306 # [mm]
     end_effector_side_length: 73.481 # [mm]
     active_link_length: 108.0 # [mm]
-    passive_link_length: 160.0 # [mm]
-    passive_link_width: 32.0 # [mm]
+    passive_link_length: 174.0 # [mm]
+    passive_link_width: 42.8 # [mm]
     joint_min: 0.174532925199 # [rad] (10 deg)
     joint_max: 1.4835298642 # [rad] (85 deg)
