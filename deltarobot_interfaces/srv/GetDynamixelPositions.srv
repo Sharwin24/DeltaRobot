@@ -1,4 +1,4 @@
-# Empty Request
+std_msgs/Empty request
 ---
 int32 motor1_position
 int32 motor2_position

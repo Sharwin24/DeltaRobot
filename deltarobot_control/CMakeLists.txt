@@ -18,6 +18,17 @@ include_directories(
   ${deltarobot_interfaces_INCLUDE_DIRS}
 )
 
+# Delta Testing Node
+add_executable(delta_test src/delta_test.cpp)
+ament_target_dependencies(delta_test rclcpp deltarobot_interfaces)
+target_link_libraries(delta_test ${deltarobot_interfaces_LIBRARIES})
+
+# Install
+install(TARGETS
+  delta_test
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 # Install launch files
 install(DIRECTORY
   launch
