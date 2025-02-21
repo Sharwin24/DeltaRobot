@@ -15,6 +15,8 @@
   <depend>deltarobot_kinematics</depend>
   <depend>deltarobot_motor_control</depend>
 
+  <depend>geometry_msgs</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

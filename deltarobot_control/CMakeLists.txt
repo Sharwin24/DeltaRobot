@@ -12,6 +12,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(deltarobot_interfaces REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 include_directories(
   include/deltarobot_control
@@ -20,7 +21,7 @@ include_directories(
 
 # Delta Testing Node
 add_executable(delta_test src/delta_test.cpp)
-ament_target_dependencies(delta_test rclcpp deltarobot_interfaces)
+ament_target_dependencies(delta_test rclcpp deltarobot_interfaces geometry_msgs)
 target_link_libraries(delta_test ${deltarobot_interfaces_LIBRARIES})
 
 # Install
