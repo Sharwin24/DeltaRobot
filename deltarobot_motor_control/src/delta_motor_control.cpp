@@ -56,7 +56,6 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
         for (uint8_t i = 0; i < motor_positions.size(); i++) {
           // Create parameter for GroupSyncWrite
           uint8_t param_goal_position[4];
-          uint32_t pos = motor_positions[i];
           param_goal_position[0] = DXL_LOBYTE(DXL_LOWORD(motor_positions[i]));
           param_goal_position[1] = DXL_HIBYTE(DXL_LOWORD(motor_positions[i]));
           param_goal_position[2] = DXL_LOBYTE(DXL_HIWORD(motor_positions[i]));
@@ -116,7 +115,7 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
 
       RCLCPP_INFO(
         this->get_logger(),
-        "Motor Positions: Motor1: %d, Motor2: %d, Motor3: %d",
+        "Motor Positions: (%d, %d, %d)",
         motor_positions[0], motor_positions[1], motor_positions[2]
       );
 
