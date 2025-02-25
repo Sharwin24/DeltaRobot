@@ -14,7 +14,6 @@ find_package(Doxygen)
 find_package(rclcpp REQUIRED)
 find_package(deltarobot_interfaces REQUIRED)
 find_package(dynamixel_sdk REQUIRED)
-find_package(dynamixel_sdk_custom_interfaces REQUIRED)
 
 include_directories(
   include/deltarobot_motor_control
