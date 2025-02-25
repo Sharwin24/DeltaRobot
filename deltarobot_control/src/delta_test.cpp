@@ -41,7 +41,7 @@ void DeltaTest::testTrajectory(
   // Final position is (0, 0, -200)
   // Use 10 points to interpolate the trajectory and use IK to obtain joint angles
   const int num_points = 10;
-  this->trajectory.clear();
+  std::vector<Point> trajectory;
 
   Point initial_position;
   initial_position.x = 0.0;
@@ -53,7 +53,7 @@ void DeltaTest::testTrajectory(
   final_position.z = -200.0;
 
   // Add the initial position to the list
-  this->trajectory.push_back(initial_position);
+  trajectory.push_back(initial_position);
 
   // Interpolate the rest of the points between the initial and final positions
   for (int i = 1; i < num_points - 1; i++) {
@@ -61,14 +61,14 @@ void DeltaTest::testTrajectory(
     intermediate_position.x = 0.0;
     intermediate_position.y = 0.0;
     intermediate_position.z = initial_position.z - (i * 100.0 / (num_points - 1));
-    this->trajectory.push_back(intermediate_position);
+    trajectory.push_back(intermediate_position);
   }
-  this->trajectory.push_back(final_position);
+  trajectory.push_back(final_position);
 
   // Log the created trajectory
   RCLCPP_INFO(get_logger(), "Trajectory created with %d points:", num_points);
   for (int i = 0; i < num_points; i++) {
-    Point p = this->trajectory[i];
+    Point p = trajectory[i];
     RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, p.x, p.y, p.z);
   }
 
@@ -76,9 +76,9 @@ void DeltaTest::testTrajectory(
   std::vector<deltarobot_interfaces::msg::DeltaJoints> joint_trajectory;
   for (int i = 0; i < num_points; i++) {
     auto request = std::make_shared<deltarobot_interfaces::srv::DeltaIK::Request>();
-    request->solution.x = this->trajectory[i].x;
-    request->solution.y = this->trajectory[i].y;
-    request->solution.z = this->trajectory[i].z;
+    request->solution.x = trajectory[i].x;
+    request->solution.y = trajectory[i].y;
+    request->solution.z = trajectory[i].z;
 
     // Call the DeltaIK service
     auto result = this->delta_ik_client->async_send_request(request);

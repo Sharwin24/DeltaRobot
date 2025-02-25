@@ -17,9 +17,7 @@ private:
 
   // Create a IK client to call the DeltaIK Service
   rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedPtr delta_ik_client;
-
-  std::vector<geometry_msgs::msg::Point> trajectory;
-
+  
   void testTrajectory(const std::shared_ptr<TestTraj::Request> request, std::shared_ptr<TestTraj::Response> response);
 };
 
