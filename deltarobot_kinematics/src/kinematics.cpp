@@ -13,8 +13,9 @@
 ///   ~/delta_ik (deltarobot_interfaces::srv::DeltaIK): Computes the joint angles given the end effector position (inverse kinematics)
 
 #include "rclcpp/rclcpp.hpp"
-#include "kinematics.hpp"
 #include "rclcpp/node_options.hpp"
+#include "kinematics.hpp"
+#include "geometry_msgs/msg/point.hpp"
 
 const float sqrt3 = sqrt(3.0);
 const float sin120 = sqrt3 / 2.0;
@@ -102,9 +103,9 @@ void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> 
   }
 
   // Update the response data (end effector position)
-  response->x = x; // [mm]
-  response->y = y; // [mm]
-  response->z = z; // [mm]
+  response->solution.x = x; // [mm]
+  response->solution.y = y; // [mm]
+  response->solution.z = z; // [mm]
 }
 
 int DeltaKinematics::deltaFK_AngleYZ(float x0, float y0, float z0, float& theta) {
@@ -124,9 +125,9 @@ int DeltaKinematics::deltaFK_AngleYZ(float x0, float y0, float z0, float& theta)
 
 void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response) {
   // Locally save the request data (end effector position)
-  float x = request->x; // [mm]
-  float y = request->y; // [mm]
-  float z = request->z; // [mm]
+  float x = request->solution.x; // [mm]
+  float y = request->solution.y; // [mm]
+  float z = request->solution.z; // [mm]
   float theta1 = 0.0;
   float theta2 = 0.0;
   float theta3 = 0.0;

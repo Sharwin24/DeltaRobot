@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "deltarobot_interfaces/srv/delta_fk.hpp"
 #include "deltarobot_interfaces/srv/delta_ik.hpp"
+#include "geometry_msgs/msg/point.hpp"
 #include <math.h>
 
 class DeltaKinematics : public rclcpp::Node {

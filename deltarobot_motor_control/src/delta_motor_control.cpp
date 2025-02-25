@@ -5,6 +5,7 @@
 #define ADDR_TORQUE_ENABLE 64
 #define ADDR_GOAL_POSITION 116
 #define ADDR_PRESENT_POSITION 132
+#define ADDR_GROUP_SYNC_WRITE 133
 
 // Protocol version
 #define PROTOCOL_VERSION 2.0  // Default Protocol version of DYNAMIXEL X series.

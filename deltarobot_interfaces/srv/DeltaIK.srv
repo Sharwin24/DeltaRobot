@@ -1,5 +1,3 @@
-float64 x # [mm]
-float64 y # [mm]
-float64 z # [mm]
+geometry_msgs/Point solution # [mm]
 ---
 DeltaJoints joint_angles

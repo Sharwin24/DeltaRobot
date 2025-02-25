@@ -13,6 +13,7 @@ find_package(ament_cmake REQUIRED)
 find_package(Doxygen)
 find_package(rclcpp REQUIRED)
 find_package(deltarobot_interfaces REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 include_directories(
   include/deltarobot_kinematics
@@ -21,7 +22,7 @@ include_directories(
 
 # Delta Kinematics Node
 add_executable(kinematics src/kinematics.cpp)
-ament_target_dependencies(kinematics rclcpp deltarobot_interfaces)
+ament_target_dependencies(kinematics rclcpp deltarobot_interfaces geometry_msgs)
 target_link_libraries(kinematics ${deltarobot_interfaces_LIBRARIES})
 
 # Install
