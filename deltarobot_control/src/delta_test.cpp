@@ -66,7 +66,7 @@ void DeltaTest::testTrajectory(
   trajectory.push_back(final_position);
 
   // Log the created trajectory
-  RCLCPP_INFO(get_logger(), "Trajectory created with %d points:", num_points);
+  RCLCPP_INFO(get_logger(), "Trajectory created with %d points:", trajectory.size());
   for (int i = 0; i < num_points; i++) {
     Point p = trajectory[i];
     RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, p.x, p.y, p.z);
@@ -84,11 +84,19 @@ void DeltaTest::testTrajectory(
 
     // Call the IK service and wait for the response before continuing
     auto result = this->delta_ik_client->async_send_request(ik_request);
-    auto response = result.get(); // Block until service responds
+    try {
+      auto response = result.get(); // Block until service responds
+      joint_trajectory.push_back(response->joint_angles);
+      RCLCPP_INFO(get_logger(), "IK service call successful");
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR(get_logger(), "Service call failed: %s", e.what());
+      response->success = false;
+      return;
+    }
   }
 
   // Log the joint trajectory
-  RCLCPP_INFO(get_logger(), "Joint trajectory created with %d points:", num_points);
+  RCLCPP_INFO(get_logger(), "Joint trajectory created with %d points:", joint_trajectory.size());
   for (int i = 0; i < num_points; i++) {
     deltarobot_interfaces::msg::DeltaJoints j = joint_trajectory[i];
     RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, j.theta1, j.theta2, j.theta3);
