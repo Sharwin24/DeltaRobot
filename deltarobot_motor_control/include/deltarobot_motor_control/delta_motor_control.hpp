@@ -26,6 +26,9 @@ public:
   
   dynamixel::PortHandler* portHandler;
   dynamixel::PacketHandler* packetHandler;
+  dynamixel::GroupSyncWrite* groupSyncWrite;
+
+  void initializeDynamixels();
   
   uint32_t convertToMotorPosition(float theta);
 };
