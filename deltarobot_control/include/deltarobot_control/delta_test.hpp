@@ -13,6 +13,8 @@ private:
   using TestTraj = deltarobot_interfaces::srv::TestTrajectory;
   rclcpp::Service<TestTraj>::SharedPtr testing_trajectory_server;
 
+  std::vector<Point> trajectory;
+
   void testTrajectory(const std::shared_ptr<TestTraj::Request> request, std::shared_ptr<TestTraj::Response> response);
 };
 
