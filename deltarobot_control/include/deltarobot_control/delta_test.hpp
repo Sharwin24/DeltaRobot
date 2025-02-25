@@ -3,16 +3,20 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "deltarobot_interfaces/srv/test_trajectory.hpp"
+#include "deltarobot_interfaces/srv/delta_ik.hpp"
 #include "geometry_msgs/msg/point.hpp"
 
 class DeltaTest : public rclcpp::Node {
 public:
-  DeltaTest();
-  ~DeltaTest() = default;
+DeltaTest();
+~DeltaTest() = default;
 
 private:
   using TestTraj = deltarobot_interfaces::srv::TestTrajectory;
   rclcpp::Service<TestTraj>::SharedPtr testing_trajectory_server;
+
+  // Create a IK client to call the DeltaIK Service
+  rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedPtr delta_ik_client;
 
   std::vector<geometry_msgs::msg::Point> trajectory;
 

@@ -20,6 +20,16 @@ DeltaTest::DeltaTest() : Node("delta_test") {
     "test_trajectory",
     std::bind(&DeltaTest::testTrajectory, this, std::placeholders::_1, std::placeholders::_2)
   );
+
+  this->delta_ik_client = create_client<deltarobot_interfaces::srv::DeltaIK>("delta_ik");
+  // Wait until service is ready
+  while (!this->delta_ik_client->wait_for_service(std::chrono::seconds(2))) {
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(get_logger(), "Interrupted while waiting for the service. Exiting.");
+      return;
+    }
+    RCLCPP_INFO(get_logger(), "Service not available, waiting again...");
+  }
 }
 
 void DeltaTest::testTrajectory(
@@ -63,6 +73,28 @@ void DeltaTest::testTrajectory(
   }
 
   // Convert the end-effector trajectory into a joint trajectory using the IK service
+  std::vector<deltarobot_interfaces::msg::DeltaJoints> joint_trajectory;
+  for (int i = 0; i < num_points; i++) {
+    auto request = std::make_shared<deltarobot_interfaces::srv::DeltaIK::Request>();
+    request->solution.x = this->trajectory[i].x;
+    request->solution.y = this->trajectory[i].y;
+    request->solution.z = this->trajectory[i].z;
+
+    // Call the DeltaIK service
+    auto result = this->delta_ik_client->async_send_request(request);
+    if (rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) == rclcpp::FutureReturnCode::SUCCESS) {
+      joint_trajectory.push_back(result.get()->joint_angles);
+    } else {
+      RCLCPP_ERROR(get_logger(), "Failed to call DeltaIK service");
+    }
+  }
+
+  // Log the joint trajectory
+  RCLCPP_INFO(get_logger(), "Joint trajectory created with %d points:", num_points);
+  for (int i = 0; i < num_points; i++) {
+    deltarobot_interfaces::msg::DeltaJoints j = joint_trajectory[i];
+    RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, j.theta1, j.theta2, j.theta3);
+  }
 
   // Signal success after service is finished
   response->success = true;
