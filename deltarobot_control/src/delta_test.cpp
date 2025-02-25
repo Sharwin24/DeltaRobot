@@ -84,16 +84,7 @@ void DeltaTest::testTrajectory(
 
     // Call the IK service and wait for the response before continuing
     auto result = this->delta_ik_client->async_send_request(ik_request);
-
-    // Wait for the response
-    if (rclcpp::spin_until_future_complete(shared_from_this(), result) == rclcpp::FutureReturnCode::SUCCESS) {
-      RCLCPP_INFO(get_logger(), "IK service call successful");
-      joint_trajectory.push_back(result.get()->joint_angles);
-    } else {
-      RCLCPP_ERROR(get_logger(), "Failed to call IK service");
-      response->success = false;
-      return;
-    }    
+    auto response = result.get(); // Block until service responds
   }
 
   // Log the joint trajectory
