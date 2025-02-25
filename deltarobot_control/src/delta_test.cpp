@@ -77,7 +77,23 @@ void DeltaTest::testTrajectory(
 
   for (int i = 0; i < num_points; i++) {
     // Create IK request
+    auto ik_request = std::make_shared<deltarobot_interfaces::srv::DeltaIK::Request>();
+    ik_request->solution.x = trajectory[i].x;
+    ik_request->solution.y = trajectory[i].y;
+    ik_request->solution.z = trajectory[i].z;
 
+    // Call the IK service and wait for the response before continuing
+    auto result = this->delta_ik_client->async_send_request(ik_request);
+
+    // Wait for the response
+    if (rclcpp::spin_until_future_complete(shared_from_this(), result) == rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_INFO(get_logger(), "IK service call successful");
+      joint_trajectory.push_back(result.get()->joint_angles);
+    } else {
+      RCLCPP_ERROR(get_logger(), "Failed to call IK service");
+      response->success = false;
+      return;
+    }    
   }
 
   // Log the joint trajectory
