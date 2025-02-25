@@ -69,7 +69,7 @@ void DeltaTest::testTrajectory(
   RCLCPP_INFO(get_logger(), "Trajectory created with %ld points:", trajectory.size());
   for (int i = 0; i < num_points; i++) {
     Point p = trajectory[i];
-    RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, p.x, p.y, p.z);
+    RCLCPP_INFO(get_logger(), "\t EE Point %d: (%.2f, %.2f, %.2f)", i, p.x, p.y, p.z);
   }
 
   // Convert the end-effector trajectory into a joint trajectory using the IK service
@@ -82,21 +82,22 @@ void DeltaTest::testTrajectory(
     ik_request->solution.y = trajectory[i].y;
     ik_request->solution.z = trajectory[i].z;
 
-    this->delta_ik_client->async_send_request(ik_request);
-    [this, i, joint_trajectory, num_points](rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
-      RCLCPP_INFO(this->get_logger(), "Called Future CB");
-      auto ik_response = future.get();
-      joint_trajectory->push_back(ik_response->joint_angles);
+    this->delta_ik_client->async_send_request(
+      ik_request,
+      [this, i, joint_trajectory, num_points](rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
+        auto ik_response = future.get();
+        joint_trajectory->push_back(ik_response->joint_angles);
 
-      if (joint_trajectory->size() == static_cast<size_t>(num_points)) {
-        // Log the joint trajectory
-        RCLCPP_INFO(this->get_logger(), "Joint trajectory created with %ld points:", joint_trajectory->size());
-        for (int j = 0; j < num_points; j++) {
-          const auto& joints = joint_trajectory->at(j);
-          RCLCPP_INFO(this->get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", j, joints.theta1, joints.theta2, joints.theta3);
+        if (joint_trajectory->size() == static_cast<size_t>(num_points)) {
+          // Log the joint trajectory
+          RCLCPP_INFO(this->get_logger(), "Joint trajectory created with %ld points:", joint_trajectory->size());
+          for (int j = 0; j < num_points; j++) {
+            const auto& joints = joint_trajectory->at(j);
+            RCLCPP_INFO(this->get_logger(), "\t Joint Angles %d: (%.2f, %.2f, %.2f) [rad]", j, joints.theta1, joints.theta2, joints.theta3);
+          }
         }
       }
-      };
+    );
   }
 
   // Signal success after service is finished
