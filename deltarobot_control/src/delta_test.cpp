@@ -75,10 +75,6 @@ void DeltaTest::testTrajectory(
   // Convert the end-effector trajectory into a joint trajectory using the IK service
   auto joint_trajectory = std::make_shared<std::vector<deltarobot_interfaces::msg::DeltaJoints>>();
 
-  auto process_ik_response = [this, joint_trajectory, num_points, response](int index, rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
-    auto ik_response = future.get();
-    };
-
   for (int i = 0; i < num_points; i++) {
     // Create IK request
     auto ik_request = std::make_shared<deltarobot_interfaces::srv::DeltaIK::Request>();
@@ -86,24 +82,20 @@ void DeltaTest::testTrajectory(
     ik_request->solution.y = trajectory[i].y;
     ik_request->solution.z = trajectory[i].z;
 
-    // Call the IK service and wait for the response before continuing
-    auto result = this->delta_ik_client->async_send_request(ik_request);
-    if (rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) != rclcpp::FutureReturnCode::SUCCESS) {
-      RCLCPP_ERROR(get_logger(), "Service call failed");
-      response->success = false;
-      return;
-    }
+    this->delta_ik_client->async_send_request(ik_request);
+    [this, i, joint_trajectory, num_points] (rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
+      auto ik_response = future.get();
+      joint_trajectory->push_back(ik_response->joint_angles);
 
-    // Get the response from the result and add the joint angles to the trajectory
-    auto ik_response = result.get();
-    joint_trajectory.push_back(ik_response->joint_angles);
-  }
-
-  // Log the joint trajectory
-  RCLCPP_INFO(get_logger(), "Joint trajectory created with %ld points:", joint_trajectory.size());
-  for (int i = 0; i < num_points; i++) {
-    deltarobot_interfaces::msg::DeltaJoints j = joint_trajectory[i];
-    RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, j.theta1, j.theta2, j.theta3);
+      if (joint_trajectory->size() == static_cast<size_t>(num_points)) {
+        // Log the joint trajectory
+        RCLCPP_INFO(this->get_logger(), "Joint trajectory created with %ld points:", joint_trajectory->size());
+        for (int j = 0; j < num_points; j++) {
+          const auto& joints = joint_trajectory->at(j);
+          RCLCPP_INFO(this->get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", j, joints.theta1, joints.theta2, joints.theta3);
+        }
+      }
+    };
   }
 
   // Signal success after service is finished
