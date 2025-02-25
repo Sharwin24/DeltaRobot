@@ -53,13 +53,13 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
 
         // Position Value of X series is 4 byte data.
         // For AX & MX(1.0) use 2 byte data(uint16_t) for the Position Value.
-        for (uint8_t i = 1; i <= motor_positions.size(); i++) {
+        for (uint8_t i = 0; i < motor_positions.size(); i++) {
           // Create parameter for GroupSyncWrite
           uint8_t param_goal_position[4];
-          param_goal_position[0] = DXL_LOBYTE(DXL_LOWORD(motor_positions[i - 1]));
-          param_goal_position[1] = DXL_HIBYTE(DXL_LOWORD(motor_positions[i - 1]));
-          param_goal_position[2] = DXL_LOBYTE(DXL_HIWORD(motor_positions[i - 1]));
-          param_goal_position[3] = DXL_HIBYTE(DXL_HIWORD(motor_positions[i - 1]));
+          param_goal_position[0] = DXL_LOBYTE(DXL_LOWORD(motor_positions[i]));
+          param_goal_position[1] = DXL_HIBYTE(DXL_LOWORD(motor_positions[i]));
+          param_goal_position[2] = DXL_LOBYTE(DXL_HIWORD(motor_positions[i]));
+          param_goal_position[3] = DXL_HIBYTE(DXL_HIWORD(motor_positions[i]));
 
           if (!this->groupSyncWrite->addParam(i, param_goal_position)) {
             RCLCPP_ERROR(this->get_logger(), "Failed to add param to groupSyncWrite");
