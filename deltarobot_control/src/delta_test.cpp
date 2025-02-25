@@ -74,19 +74,10 @@ void DeltaTest::testTrajectory(
 
   // Convert the end-effector trajectory into a joint trajectory using the IK service
   std::vector<deltarobot_interfaces::msg::DeltaJoints> joint_trajectory;
-  for (int i = 0; i < num_points; i++) {
-    auto request = std::make_shared<deltarobot_interfaces::srv::DeltaIK::Request>();
-    request->solution.x = trajectory[i].x;
-    request->solution.y = trajectory[i].y;
-    request->solution.z = trajectory[i].z;
 
-    // Call the DeltaIK service
-    auto result = this->delta_ik_client->async_send_request(request);
-    if (rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) == rclcpp::FutureReturnCode::SUCCESS) {
-      joint_trajectory.push_back(result.get()->joint_angles);
-    } else {
-      RCLCPP_ERROR(get_logger(), "Failed to call DeltaIK service");
-    }
+  for (int i = 0; i < num_points; i++) {
+    // Create IK request
+
   }
 
   // Log the joint trajectory
