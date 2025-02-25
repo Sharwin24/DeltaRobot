@@ -83,7 +83,8 @@ void DeltaTest::testTrajectory(
     ik_request->solution.z = trajectory[i].z;
 
     this->delta_ik_client->async_send_request(ik_request);
-    [this, i, joint_trajectory, num_points] (rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
+    [this, i, joint_trajectory, num_points](rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
+      RCLCPP_INFO(this->get_logger(), "Called Future CB");
       auto ik_response = future.get();
       joint_trajectory->push_back(ik_response->joint_angles);
 
@@ -95,7 +96,7 @@ void DeltaTest::testTrajectory(
           RCLCPP_INFO(this->get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", j, joints.theta1, joints.theta2, joints.theta3);
         }
       }
-    };
+      };
   }
 
   // Signal success after service is finished
