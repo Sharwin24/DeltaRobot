@@ -66,7 +66,7 @@ void DeltaTest::testTrajectory(
   trajectory.push_back(final_position);
 
   // Log the created trajectory
-  RCLCPP_INFO(get_logger(), "Trajectory created with %d points:", trajectory.size());
+  RCLCPP_INFO(get_logger(), "Trajectory created with %ld points:", trajectory.size());
   for (int i = 0; i < num_points; i++) {
     Point p = trajectory[i];
     RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, p.x, p.y, p.z);
@@ -96,7 +96,7 @@ void DeltaTest::testTrajectory(
   }
 
   // Log the joint trajectory
-  RCLCPP_INFO(get_logger(), "Joint trajectory created with %d points:", joint_trajectory.size());
+  RCLCPP_INFO(get_logger(), "Joint trajectory created with %ld points:", joint_trajectory.size());
   for (int i = 0; i < num_points; i++) {
     deltarobot_interfaces::msg::DeltaJoints j = joint_trajectory[i];
     RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, j.theta1, j.theta2, j.theta3);
