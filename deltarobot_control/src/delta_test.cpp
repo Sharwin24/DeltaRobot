@@ -58,8 +58,11 @@ void DeltaTest::testTrajectory(
   // Log the created trajectory
   RCLCPP_INFO(get_logger(), "Trajectory created with %d points:", num_points);
   for (int i = 0; i < num_points; i++) {
-    RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, this->trajectory[i].x, this->trajectory[i].y, this->trajectory[i].z);
+    Point p = this->trajectory[i];
+    RCLCPP_INFO(get_logger(), "\tPoint %d: (%.2f, %.2f, %.2f)", i, p.x, p.y, p.z);
   }
+
+  // Convert the end-effector trajectory into a joint trajectory using the IK service
 
   // Signal success after service is finished
   response->success = true;
