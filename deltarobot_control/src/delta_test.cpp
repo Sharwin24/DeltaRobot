@@ -73,7 +73,11 @@ void DeltaTest::testTrajectory(
   }
 
   // Convert the end-effector trajectory into a joint trajectory using the IK service
-  std::vector<deltarobot_interfaces::msg::DeltaJoints> joint_trajectory;
+  auto joint_trajectory = std::make_shared<std::vector<deltarobot_interfaces::msg::DeltaJoints>>();
+
+  auto process_ik_response = [this, joint_trajectory, num_points, response](int index, rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
+    auto ik_response = future.get();
+    };
 
   for (int i = 0; i < num_points; i++) {
     // Create IK request
