@@ -132,10 +132,10 @@ std::vector<Point> pringleTrajectory() {
   }
 
   // Log the created trajectory
-  printf("EE Trajectory created with %ld points:", trajectory.size());
+  printf("EE Trajectory created with %ld points\n", trajectory.size());
   for (int i = 0; i < num_points; i++) {
     Point p = trajectory[i];
-    printf("\t EE Point %d: (%.2f, %.2f, %.2f)", i + 1, p.x, p.y, p.z);
+    printf("\t EE Point %d: (%.2f, %.2f, %.2f)\n", i + 1, p.x, p.y, p.z);
   }
 
   return trajectory;
@@ -186,14 +186,14 @@ int main() {
       joints[i].theta2 = theta2;
       joints[i].theta3 = theta3;
     } else {
-      printf("Point %d is non-existing (%f, %f, %f) \n", i + 1, x0, y0, z0);
+      printf("Point %d is non-existing (%.3f, %.3f, %.3f) \n", i + 1, x0, y0, z0);
     }
   }
 
   // Print the resulting Joint trajectory
   printf("Trajectory created with %ld points:\n", joints.size());
   for (int i = 0; i < num_points; i++) {
-    printf("Joint %d: theta1=%f, theta2=%f, theta3=%f\n", i + 1, joints[i].theta1, joints[i].theta2, joints[i].theta3);
+    printf("Joint %d: theta1=%.3f, theta2=%.3f, theta3=%.3f\n", i + 1, joints[i].theta1, joints[i].theta2, joints[i].theta3);
   }
 
   return 0;

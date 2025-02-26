@@ -48,6 +48,7 @@ void DeltaTest::testTrajectory(
   } else {
     RCLCPP_ERROR(get_logger(), "Invalid trajectory type: %s", type.c_str());
     response->success = false;
+    return;
   }
 
   int num_points = trajectory.size();
