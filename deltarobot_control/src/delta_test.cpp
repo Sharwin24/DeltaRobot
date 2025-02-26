@@ -107,7 +107,6 @@ void DeltaTest::testTrajectory(
             joint_msg.theta3 = joint_trajectory->at(i).theta3;
 
             // Publish the message
-            RCLCPP_INFO(get_logger(), "Publishing joint angles to move the robot to point %d", i);
             this->joint_pub->publish(joint_msg);
             // Let the robot read and move
             rclcpp::sleep_for(std::chrono::milliseconds(50));
