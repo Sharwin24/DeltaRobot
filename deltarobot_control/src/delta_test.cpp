@@ -21,6 +21,8 @@ DeltaTest::DeltaTest() : Node("delta_test") {
     std::bind(&DeltaTest::testTrajectory, this, std::placeholders::_1, std::placeholders::_2)
   );
 
+  this->joint_pub = create_publisher<deltarobot_interfaces::msg::DeltaJoints>("/set_joints", 10);
+
   this->delta_ik_client = create_client<deltarobot_interfaces::srv::DeltaIK>("delta_ik");
   // Wait until service is ready
   while (!this->delta_ik_client->wait_for_service(std::chrono::seconds(2))) {
@@ -94,6 +96,21 @@ void DeltaTest::testTrajectory(
           for (int j = 0; j < num_points; j++) {
             const auto& joints = joint_trajectory->at(j);
             RCLCPP_INFO(this->get_logger(), "\t Joint Angles %d: (%.2f, %.2f, %.2f) [rad]", j, joints.theta1, joints.theta2, joints.theta3);
+          }
+
+          // Publish the joint trajectory messages to the topic "/set_joints"
+          for (int i = 0; i < num_points; i++) {
+            // Create a message with the joint angles
+            auto joint_msg = deltarobot_interfaces::msg::DeltaJoints();
+            joint_msg.theta1 = joint_trajectory->at(i).theta1;
+            joint_msg.theta2 = joint_trajectory->at(i).theta2;
+            joint_msg.theta3 = joint_trajectory->at(i).theta3;
+
+            // Publish the message
+            RCLCPP_INFO(get_logger(), "Publishing joint angles to move the robot to point %d", i);
+            this->joint_pub->publish(joint_msg);
+            // Let the robot read and move
+            rclcpp::sleep_for(std::chrono::milliseconds(50));
           }
         }
       }
