@@ -23,7 +23,7 @@ DeltaMotorControl::DeltaMotorControl() : Node("delta_motor_control") {
   RCLCPP_INFO(this->get_logger(), "DeltaMotorControl Started");
 
   this->declare_parameter("qos_depth", 10);
-  int8_t qos_depth = 0;
+  int8_t qos_depth = 10;
   this->get_parameter("qos_depth", qos_depth);
 
   const auto QOS_RKL10V =
