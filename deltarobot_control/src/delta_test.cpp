@@ -10,6 +10,7 @@
 #include "deltarobot_interfaces/srv/play_fk_trajectory.hpp"
 #include "deltarobot_interfaces/srv/play_ik_trajectory.hpp"
 #include "geometry_msgs/msg/point.hpp"
+#include "std_msgs/msg/string.hpp"
 
 using Point = geometry_msgs::msg::Point;
 
@@ -35,9 +36,19 @@ DeltaTest::DeltaTest() : Node("delta_test") {
 }
 
 void DeltaTest::testTrajectory(
-  [[maybe_unused]] std::shared_ptr<TestTraj::Request> request, std::shared_ptr<TestTraj::Response> response) {
+  std::shared_ptr<TestTraj::Request> request, std::shared_ptr<TestTraj::Response> response) {
   RCLCPP_INFO(get_logger(), "Received request for test trajectory");
 
+  std::string type = request->type.data;
+  if (type == "straight_up_down") {
+    response->success = this->straightUpDownTrajectory();
+  } else {
+    RCLCPP_ERROR(get_logger(), "Invalid trajectory type: %s", type.c_str());
+    response->success = false;
+  }
+}
+
+bool DeltaTest::straightUpDownTrajectory() {
   // Create a simple up and down trajectory ranging from (0, 0, -100) to (0, 0, -200)
   // Initial position is (0, 0, -100)
   // Final position is (0, 0, -200)
@@ -117,7 +128,10 @@ void DeltaTest::testTrajectory(
   }
 
   // Signal success after service is finished
-  response->success = true;
+  return true;
+}
+bool DeltaTest::pringleTrajectory() {
+  return true;
 }
 
 int main(int argc, char* argv[]) {

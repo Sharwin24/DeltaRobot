@@ -8,8 +8,8 @@
 
 class DeltaTest : public rclcpp::Node {
 public:
-DeltaTest();
-~DeltaTest() = default;
+  DeltaTest();
+  ~DeltaTest() = default;
 
 private:
   using TestTraj = deltarobot_interfaces::srv::TestTrajectory;
@@ -20,6 +20,9 @@ private:
   rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedPtr delta_ik_client;
 
   void testTrajectory(const std::shared_ptr<TestTraj::Request> request, std::shared_ptr<TestTraj::Response> response);
+
+  bool straightUpDownTrajectory();
+  bool pringleTrajectory();
 };
 
 #endif // !DELTA_TEST_HPP_
