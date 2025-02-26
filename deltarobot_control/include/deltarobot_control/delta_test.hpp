@@ -21,8 +21,9 @@ private:
 
   void testTrajectory(const std::shared_ptr<TestTraj::Request> request, std::shared_ptr<TestTraj::Response> response);
 
-  bool straightUpDownTrajectory();
-  bool pringleTrajectory();
+  using Point = geometry_msgs::msg::Point;
+  std::vector<Point> straightUpDownTrajectory();
+  std::vector<Point> pringleTrajectory();
 };
 
 #endif // !DELTA_TEST_HPP_

@@ -10,7 +10,6 @@
 #include "deltarobot_interfaces/srv/play_fk_trajectory.hpp"
 #include "deltarobot_interfaces/srv/play_ik_trajectory.hpp"
 #include "geometry_msgs/msg/point.hpp"
-
 #include <math.h>
 
 using Point = geometry_msgs::msg::Point;
@@ -41,17 +40,63 @@ void DeltaTest::testTrajectory(
   RCLCPP_INFO(get_logger(), "Received request for test trajectory");
 
   std::string type = request->type.data;
+  std::vector<Point> trajectory;
   if (type == "straight_up_down") {
-    response->success = this->straightUpDownTrajectory();
+    trajectory = this->straightUpDownTrajectory();
   } else if (type == "pringle") {
-    response->success = this->pringleTrajectory();
+    trajectory = this->pringleTrajectory();
   } else {
     RCLCPP_ERROR(get_logger(), "Invalid trajectory type: %s", type.c_str());
     response->success = false;
   }
+
+  int num_points = trajectory.size();
+  // Convert the end-effector trajectory into a joint trajectory using the IK service
+  auto joint_trajectory = std::make_shared<std::vector<deltarobot_interfaces::msg::DeltaJoints>>();
+  for (int i = 0; i < num_points; i++) {
+    // Create IK request
+    auto ik_request = std::make_shared<deltarobot_interfaces::srv::DeltaIK::Request>();
+    ik_request->solution.x = trajectory[i].x;
+    ik_request->solution.y = trajectory[i].y;
+    ik_request->solution.z = trajectory[i].z;
+
+    this->delta_ik_client->async_send_request(
+      ik_request,
+      [this, i, joint_trajectory, num_points](rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
+        auto ik_response = future.get();
+        joint_trajectory->push_back(ik_response->joint_angles);
+
+        if (joint_trajectory->size() == static_cast<size_t>(num_points)) {
+          // Log the joint trajectory
+          RCLCPP_INFO(this->get_logger(), "Joint trajectory created with %ld points:", joint_trajectory->size());
+          for (int j = 0; j < num_points; j++) {
+            const auto& joints = joint_trajectory->at(j);
+            RCLCPP_INFO(this->get_logger(), "\t Joint Angles %d: (%.2f, %.2f, %.2f) [rad]", j, joints.theta1, joints.theta2, joints.theta3);
+          }
+
+          // Publish the joint trajectory messages to the topic "/set_joints"
+          for (int i = 0; i < num_points; i++) {
+            // Create a message with the joint angles
+            auto joint_msg = deltarobot_interfaces::msg::DeltaJoints();
+            joint_msg.theta1 = joint_trajectory->at(i).theta1;
+            joint_msg.theta2 = joint_trajectory->at(i).theta2;
+            joint_msg.theta3 = joint_trajectory->at(i).theta3;
+
+            // Publish the message
+            this->joint_pub->publish(joint_msg);
+            // Let the robot read and move
+            rclcpp::sleep_for(std::chrono::milliseconds(50));
+          }
+        }
+      }
+    );
+  }
+
+  // Signal success
+  response->success = true;
 }
 
-bool DeltaTest::straightUpDownTrajectory() {
+std::vector<Point> DeltaTest::straightUpDownTrajectory() {
   // Create a simple up and down trajectory ranging from (0, 0, -100) to (0, 0, -200)
   // Initial position is (0, 0, -100)
   // Final position is (0, 0, -200)
@@ -88,52 +133,9 @@ bool DeltaTest::straightUpDownTrajectory() {
     RCLCPP_INFO(get_logger(), "\t EE Point %d: (%.2f, %.2f, %.2f)", i, p.x, p.y, p.z);
   }
 
-  // Convert the end-effector trajectory into a joint trajectory using the IK service
-  auto joint_trajectory = std::make_shared<std::vector<deltarobot_interfaces::msg::DeltaJoints>>();
-
-  for (int i = 0; i < num_points; i++) {
-    // Create IK request
-    auto ik_request = std::make_shared<deltarobot_interfaces::srv::DeltaIK::Request>();
-    ik_request->solution.x = trajectory[i].x;
-    ik_request->solution.y = trajectory[i].y;
-    ik_request->solution.z = trajectory[i].z;
-
-    this->delta_ik_client->async_send_request(
-      ik_request,
-      [this, i, joint_trajectory, num_points](rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
-        auto ik_response = future.get();
-        joint_trajectory->push_back(ik_response->joint_angles);
-
-        if (joint_trajectory->size() == static_cast<size_t>(num_points)) {
-          // Log the joint trajectory
-          RCLCPP_INFO(this->get_logger(), "Joint trajectory created with %ld points:", joint_trajectory->size());
-          for (int j = 0; j < num_points; j++) {
-            const auto& joints = joint_trajectory->at(j);
-            RCLCPP_INFO(this->get_logger(), "\t Joint Angles %d: (%.2f, %.2f, %.2f) [rad]", j, joints.theta1, joints.theta2, joints.theta3);
-          }
-
-          // Publish the joint trajectory messages to the topic "/set_joints"
-          for (int i = 0; i < num_points; i++) {
-            // Create a message with the joint angles
-            auto joint_msg = deltarobot_interfaces::msg::DeltaJoints();
-            joint_msg.theta1 = joint_trajectory->at(i).theta1;
-            joint_msg.theta2 = joint_trajectory->at(i).theta2;
-            joint_msg.theta3 = joint_trajectory->at(i).theta3;
-
-            // Publish the message
-            this->joint_pub->publish(joint_msg);
-            // Let the robot read and move
-            rclcpp::sleep_for(std::chrono::milliseconds(50));
-          }
-        }
-      }
-    );
-  }
-
-  // Signal success after service is finished
-  return true;
+  return trajectory;
 }
-bool DeltaTest::pringleTrajectory() {
+std::vector<Point> DeltaTest::pringleTrajectory() {
   // Circle Trajectory in XY plane while Z coordinate goes through 2 cycles of a sine wave
   const int num_points = 100;
   const float circle_center_z = -180.0;
@@ -169,50 +171,7 @@ bool DeltaTest::pringleTrajectory() {
     RCLCPP_INFO(get_logger(), "\t EE Point %d: (%.2f, %.2f, %.2f)", i + 1, p.x, p.y, p.z);
   }
 
-  // Convert the end-effector trajectory into a joint trajectory using the IK service
-  auto joint_trajectory = std::make_shared<std::vector<deltarobot_interfaces::msg::DeltaJoints>>();
-
-  for (int i = 0; i < num_points; i++) {
-    // Create IK request
-    auto ik_request = std::make_shared<deltarobot_interfaces::srv::DeltaIK::Request>();
-    ik_request->solution.x = trajectory[i].x;
-    ik_request->solution.y = trajectory[i].y;
-    ik_request->solution.z = trajectory[i].z;
-
-    this->delta_ik_client->async_send_request(
-      ik_request,
-      [this, i, joint_trajectory, num_points](rclcpp::Client<deltarobot_interfaces::srv::DeltaIK>::SharedFuture future) {
-        auto ik_response = future.get();
-        joint_trajectory->push_back(ik_response->joint_angles);
-
-        if (joint_trajectory->size() == static_cast<size_t>(num_points)) {
-          // Log the joint trajectory
-          RCLCPP_INFO(this->get_logger(), "Joint trajectory created with %ld points:", joint_trajectory->size());
-          for (int j = 0; j < num_points; j++) {
-            const auto& joints = joint_trajectory->at(j);
-            RCLCPP_INFO(this->get_logger(), "\t Joint Angles %d: (%.2f, %.2f, %.2f) [rad]", j, joints.theta1, joints.theta2, joints.theta3);
-          }
-
-          // Publish the joint trajectory messages to the topic "/set_joints"
-          for (int i = 0; i < num_points; i++) {
-            // Create a message with the joint angles
-            auto joint_msg = deltarobot_interfaces::msg::DeltaJoints();
-            joint_msg.theta1 = joint_trajectory->at(i).theta1;
-            joint_msg.theta2 = joint_trajectory->at(i).theta2;
-            joint_msg.theta3 = joint_trajectory->at(i).theta3;
-
-            // Publish the message
-            this->joint_pub->publish(joint_msg);
-            // Let the robot read and move
-            rclcpp::sleep_for(std::chrono::milliseconds(50));
-          }
-        }
-      }
-    );
-  }
-
-  // Signal success after service is finished
-  return true;
+  return trajectory;
 }
 
 int main(int argc, char* argv[]) {

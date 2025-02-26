@@ -4,10 +4,19 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <vector>
+
+typedef struct {
+  float x, y, z;
+} Point;
+
+typedef struct {
+  float theta1, theta2, theta3;
+} DeltaJoints;
 
 constexpr float e = 73.481; // Platform equilateral triangle side length [mm]
 constexpr float f = 261.306; // Base equilateral triangle side length [mm]
-constexpr float re = 160.0; // Passive Link Length [mm]
+constexpr float re = 174.0; // Passive Link Length [mm]
 constexpr float rf = 108.0; // Active Link Length [mm]
 
 // trigonometric constants
@@ -23,11 +32,6 @@ const float tan30 = 1 / sqrt3;
 // returned status: 0=OK, -1=non-existing position
 int delta_fk(float theta1, float theta2, float theta3, float& x0, float& y0, float& z0) {
   float t = (f - e) * tan30 / 2;
-  float dtr = pi / (float)180.0;
-
-  theta1 *= dtr;
-  theta2 *= dtr;
-  theta3 *= dtr;
 
   float y1 = -(t + rf * cos(theta1));
   float z1 = -rf * sin(theta1);
@@ -98,7 +102,46 @@ int delta_ik(float x0, float y0, float z0, float& theta1, float& theta2, float& 
   return status;
 }
 
-int main() {
+std::vector<Point> pringleTrajectory() {
+  // Circle Trajectory in XY plane while Z coordinate goes through 2 cycles of a sine wave
+  const int num_points = 100;
+  const float circle_center_z = -180.0;
+  const float amplitude = 25.0;
+
+  std::vector<float> t(num_points);
+  float step = (2 * M_PI) / (num_points - 1);
+  for (int i = 0; i < num_points; ++i) {
+    t[i] = i * step;
+  }
+
+  std::vector<float> x_circle(num_points);
+  std::vector<float> y_circle(num_points);
+  std::vector<float> z_circle(num_points);
+  for (int i = 0; i < num_points; ++i) {
+    x_circle[i] = (2.0 * amplitude) * cos(t[i]);
+    y_circle[i] = (2.0 * amplitude) * sin(t[i]);
+    z_circle[i] = circle_center_z + amplitude * sin(2 * t[i]);
+  }
+
+  // Create trajectory
+  std::vector<Point> trajectory(num_points);
+  for (int i = 0; i < num_points; ++i) {
+    trajectory[i].x = x_circle[i];
+    trajectory[i].y = y_circle[i];
+    trajectory[i].z = z_circle[i];
+  }
+
+  // Log the created trajectory
+  printf("EE Trajectory created with %ld points:", trajectory.size());
+  for (int i = 0; i < num_points; i++) {
+    Point p = trajectory[i];
+    printf("\t EE Point %d: (%.2f, %.2f, %.2f)", i + 1, p.x, p.y, p.z);
+  }
+
+  return trajectory;
+}
+
+void testing() {
   // Test some values
   float x0, y0, z0;
   float theta1, theta2, theta3;
@@ -123,6 +166,34 @@ int main() {
     printf("theta1=%f, theta2=%f, theta3=%f\n", theta1, theta2, theta3);
   } else {
     printf("non-existing point\n");
+  }
+}
+
+int main() {
+  std::vector<Point> trajectory = pringleTrajectory();
+  int num_points = trajectory.size();
+
+  std::vector<DeltaJoints> joints(num_points);
+  for (int i = 0; i < num_points; i++) {
+    float x0 = trajectory[i].x;
+    float y0 = trajectory[i].y;
+    float z0 = trajectory[i].z;
+
+    float theta1, theta2, theta3;
+    int status = delta_ik(x0, y0, z0, theta1, theta2, theta3);
+    if (status == 0) {
+      joints[i].theta1 = theta1;
+      joints[i].theta2 = theta2;
+      joints[i].theta3 = theta3;
+    } else {
+      printf("Point %d is non-existing (%f, %f, %f) \n", i + 1, x0, y0, z0);
+    }
+  }
+
+  // Print the resulting Joint trajectory
+  printf("Trajectory created with %ld points:\n", joints.size());
+  for (int i = 0; i < num_points; i++) {
+    printf("Joint %d: theta1=%f, theta2=%f, theta3=%f\n", i + 1, joints[i].theta1, joints[i].theta2, joints[i].theta3);
   }
 
   return 0;
