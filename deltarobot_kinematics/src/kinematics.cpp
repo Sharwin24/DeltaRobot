@@ -14,8 +14,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/node_options.hpp"
-#include "kinematics.hpp"
 #include "geometry_msgs/msg/point.hpp"
+#include "deltarobot_interfaces/msg/delta_joints.hpp"
+#include "kinematics.hpp"
 
 const float sqrt3 = sqrt(3.0);
 const float sin120 = sqrt3 / 2.0;
@@ -23,6 +24,9 @@ constexpr float cos120 = -0.5;
 const float tan60 = sqrt3;
 constexpr float sin30 = 0.5;
 const float tan30 = 1 / sqrt3;
+
+using Point = geometry_msgs::msg::Point;
+using DeltaJoints = deltarobot_interfaces::msg::DeltaJoints;
 
 DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   RCLCPP_INFO(this->get_logger(), "DeltaKinematics Started");
@@ -148,6 +152,41 @@ void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> 
   response->joint_angles.theta1 = theta1; // [rad]
   response->joint_angles.theta2 = theta2; // [rad]
   response->joint_angles.theta3 = theta3; // [rad]
+}
+
+void DeltaKinematics::convertToJointTrajectory(const std::shared_ptr<ConvertToJointTrajectory::Request> request, std::shared_ptr<ConvertToJointTrajectory::Response> response) {
+  // Locally save the request data (end effector trajectory)
+  std::vector<Point> trajectory = request->end_effector_trajectory;
+  std::vector<DeltaJoints> joint_trajectory;
+
+  // Iterate through the trajectory and convert each point to joint angles
+  for (auto point : trajectory) {
+    float theta1 = 0.0;
+    float theta2 = 0.0;
+    float theta3 = 0.0;
+
+    int status = this->deltaFK_AngleYZ(point.x, point.y, point.z, theta1);
+    if (status == 0) {
+      status = this->deltaFK_AngleYZ(point.x * cos120 + point.y * sin120, point.y * cos120 - point.x * sin120, point.z, theta2);  // rotate coords to +120 deg
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "DeltaIK: Non-existing point (%f, %f, %f) [mm]", point.x, point.y, point.z);
+    }
+    if (status == 0) {
+      status = this->deltaFK_AngleYZ(point.x * cos120 - point.y * sin120, point.y * cos120 + point.x * sin120, point.z, theta3);  // rotate coords to -120 deg
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "DeltaIK: Non-existing point (%f, %f, %f) [mm]", point.x, point.y, point.z);
+    }
+
+    DeltaJoints joint_angles;
+    joint_angles.theta1 = theta1;
+    joint_angles.theta2 = theta2;
+    joint_angles.theta3 = theta3;
+
+    joint_trajectory.push_back(joint_angles);
+  }
+
+  // Update the response data (joint trajectory)
+  response->joint_trajectory = joint_trajectory;
 }
 
 int main(int argc, char * argv[]) {

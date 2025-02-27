@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "deltarobot_interfaces/srv/delta_fk.hpp"
 #include "deltarobot_interfaces/srv/delta_ik.hpp"
+#include "deltarobot_interfaces/srv/convert_to_joint_trajectory.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include <math.h>
 
@@ -11,6 +12,7 @@ class DeltaKinematics : public rclcpp::Node {
 public:
   using DeltaFK = deltarobot_interfaces::srv::DeltaFK;
   using DeltaIK = deltarobot_interfaces::srv::DeltaIK;
+  using ConvertToJointTrajectory = deltarobot_interfaces::srv::ConvertToJointTrajectory;
 
   DeltaKinematics();
   ~DeltaKinematics() = default;
@@ -18,9 +20,11 @@ public:
 private:
   rclcpp::Service<DeltaFK>::SharedPtr delta_fk_server;
   rclcpp::Service<DeltaIK>::SharedPtr delta_ik_server;
+  rclcpp::Service<ConvertToJointTrajectory>::SharedPtr convert_to_joint_trajectory_server;
   
   void forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response);
   void inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response);
+  void convertToJointTrajectory(const std::shared_ptr<ConvertToJointTrajectory::Request> request, std::shared_ptr<ConvertToJointTrajectory::Response> response);
 
   // Helper function for FK to find active link angle when normal to the link's rotation axis (YZ-plane)
   int deltaFK_AngleYZ(float x0, float y0, float z0, float& theta);
