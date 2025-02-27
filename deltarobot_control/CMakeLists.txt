@@ -12,6 +12,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(deltarobot_interfaces REQUIRED)
+find_package(kalman_filter REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 include_directories(
@@ -45,6 +46,12 @@ install(DIRECTORY
 # Include launch files from deltarobot_motor_control
 install(DIRECTORY
   ../deltarobot_motor_control/launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# Include launch files from kalman_filter
+install(DIRECTORY
+  ../kalman_filter/kalman_filter/launch
   DESTINATION share/${PROJECT_NAME}
 )
 

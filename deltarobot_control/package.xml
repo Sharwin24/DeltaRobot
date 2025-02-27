@@ -14,6 +14,7 @@
   <depend>deltarobot_interfaces</depend>
   <depend>deltarobot_kinematics</depend>
   <depend>deltarobot_motor_control</depend>
+  <depend>kalman_filter</depend>
 
   <depend>geometry_msgs</depend>
 
