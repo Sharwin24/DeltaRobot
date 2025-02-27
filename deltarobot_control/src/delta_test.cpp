@@ -70,7 +70,7 @@ void DeltaTest::testTrajectory(
   // Create a request for the convert_to_joint_trajectory service
   auto convert_request = std::make_shared<ConvertToJointTrajectory::Request>();
   convert_request->end_effector_trajectory = trajectory;
-  
+
   auto joint_traj = std::make_shared<std::vector<DeltaJoints>>();
   // Call the convert_to_joint_trajectory service
   // ---------- BEGIN_CITATION [1] ----------
@@ -87,6 +87,13 @@ void DeltaTest::testTrajectory(
         const auto& joints = joint_traj->at(i);
         RCLCPP_INFO(get_logger(), "\t Joint Angles %d: (%.2f, %.2f, %.2f) [rad]", i + 1, joints.theta1, joints.theta2, joints.theta3);
       }
+
+      RCLCPP_INFO(get_logger(), "Publishing joint trajectory to motors");
+      // Publish the joint trajectory to the motors with a 50ms delay between each point
+      for (unsigned int i = 0; i < joint_traj->size(); i++) {
+        this->joint_pub->publish(joint_traj->at(i));
+        rclcpp::sleep_for(std::chrono::milliseconds(50));
+      }
     }
   );
   // ---------- END_CITATION [1] ----------
@@ -100,7 +107,7 @@ std::vector<Point> DeltaTest::straightUpDownTrajectory() {
   // Initial position is (0, 0, -100)
   // Final position is (0, 0, -200)
   // Use 10 points to interpolate the trajectory and use IK to obtain joint angles
-  const int num_points = 10;
+  const int num_points = 100;
   std::vector<Point> trajectory;
 
   Point initial_position;
@@ -136,7 +143,7 @@ std::vector<Point> DeltaTest::straightUpDownTrajectory() {
 }
 std::vector<Point> DeltaTest::pringleTrajectory() {
   // Circle Trajectory in XY plane while Z coordinate goes through 2 cycles of a sine wave
-  const int num_points = 100;
+  const int num_points = 200;
   const float circle_center_z = -180.0;
   const float amplitude = 25.0;
 
