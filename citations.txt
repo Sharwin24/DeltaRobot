@@ -1,1 +1,1 @@
-https://github.com/ros2/rclcpp/issues/312
+[1] https://github.com/ros2/rclcpp/issues/312
