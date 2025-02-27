@@ -58,6 +58,12 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
     "delta_ik",
     std::bind(&DeltaKinematics::inverseKinematics, this, std::placeholders::_1, std::placeholders::_2)
   );
+
+  // Create ConvertToJointTrajectory server
+  convert_to_joint_trajectory_server = create_service<ConvertToJointTrajectory>(
+    "convert_to_joint_trajectory",
+    std::bind(&DeltaKinematics::convertToJointTrajectory, this, std::placeholders::_1, std::placeholders::_2)
+  );
 }
 
 void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response) {
