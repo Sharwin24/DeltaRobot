@@ -1,4 +1,4 @@
 [submodule "kalman_filter"]
-	path = kalman_filter
+	path = deltarobot_sensors
 	url = git@github.com:NU-MECH-ENG-495/project-Sharwin24.git
 	branch = main
