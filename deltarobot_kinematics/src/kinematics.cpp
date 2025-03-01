@@ -195,41 +195,26 @@ std::pair<std::vector<double>, std::vector<double>> DeltaKinematics::calcAuxAngl
   std::vector<float> position = this->deltaFK(theta1, theta2, theta3);
 
   const double UP = (sqrt3 / 3) * this->SP;
-  std::vector<double> P = { position[0], position[1], position[2] };
-  std::vector<double> D = { UP - this->AL, 0, 0 };
+  const Eigen::Vector3d P = { position[0], position[1], position[2] };
+  const Eigen::Vector3d D = { UP - this->AL, 0, 0 };
   
-  std::vector<std::vector<double>> columns;
+  Eigen::Matrix3d C;
   for (int i = 0; i < 3; ++i) {
-    std::vector<std::vector<double>> R = {
-      {cos(this->phi[i]), sin(this->phi[i]), 0},
-      {-sin(this->phi[i]), cos(this->phi[i]), 0},
-      {0, 0, 1}
-    };
-    std::vector<double> c_i(3, 0.0);
-    for (int j = 0; j < 3; ++j) {
-      for (int k = 0; k < 3; ++k) {
-        c_i[j] += R[j][k] * P[k];
-      }
-      c_i[j] += D[j];
-    }
-    columns.push_back(c_i);
+    double phi_i = this->phi[i];
+    Eigen::Matrix3d R;
+    R << std::cos(phi_i), std::sin(phi_i), 0,
+      -std::sin(phi_i), std::cos(phi_i), 0,
+      0, 0, 1;
+    Eigen::Vector3d c_i = R * P + D;
+    // Set the i-th column of C to c_i.
+    C.col(i) = c_i;
   }
-
-  std::vector<std::vector<double>> C(3, std::vector<double>(3, 0.0)); // 3x3 matrix
-  // C = [c_x1, c_x2, c_x3]
-  //     [c_y1, c_y2, c_y3]
-  //     [c_z1, c_z2, c_z3]
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      C[i][j] = columns[j][i];
-    }
-  }
-  double C_x2 = C[0][1];
-  double C_y2 = C[1][1];
-  double C_z2 = C[2][1];
-  double C_x3 = C[0][2];
-  double C_y3 = C[1][2];
-  double C_z3 = C[2][2];
+  double C_x2 = C(0, 1);
+  double C_y2 = C(1, 1);
+  double C_z2 = C(2, 1);
+  double C_x3 = C(0, 2);
+  double C_y3 = C(1, 2);
+  double C_z3 = C(2, 2);
   // C_squared = c_xi^2 + c_yi^2 + c_zi^2
   double C_sqrd_2 = C_x2 * C_x2 + C_y2 * C_y2 + C_z2 * C_z2;
   double C_sqrd_3 = C_x3 * C_x3 + C_y3 * C_y3 + C_z3 * C_z3;
@@ -247,8 +232,8 @@ std::pair<std::vector<double>, std::vector<double>> DeltaKinematics::calcAuxAngl
   double t23 = acos(t23_numerator / t23_denominator);
   // theta_1i is the actuated angles which were passed into the function
   // We only need to return the auxiliary angles
-  // return std::vector<double>{t22, t23, t32, t33};
-  return std::pair<std::vector<double>, std::vector<double>>{{theta2, t22, t23}, {theta3, t32, t33}};
+  return std::make_pair(std::vector<double>{theta2, t22, t23},
+                        std::vector<double>{theta3, t32, t33});
 }
 
 Eigen::Matrix3d DeltaKinematics::calcJacobian(double theta1, double theta2, double theta3) {
