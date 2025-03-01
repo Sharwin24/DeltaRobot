@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
-    base_triangle_side_length: 261.306 # [mm]
-    end_effector_side_length: 73.481 # [mm]
+    base_triangle_side_length: 261.30642 # [mm]
+    end_effector_side_length: 73.48076 # [mm]
     active_link_length: 108.0 # [mm]
     passive_link_length: 174.0 # [mm]
     passive_link_width: 42.8 # [mm]
