@@ -21,7 +21,6 @@
 #include <math.h>
 #include <eigen3/Eigen/Dense>
 
-
 const float sqrt3 = sqrt(3.0);
 const float sin120 = sqrt3 / 2.0;
 constexpr float cos120 = -0.5;
@@ -277,28 +276,39 @@ std::vector<std::vector<double>> DeltaKinematics::calcJacobian(double theta1, do
   auto J_iz = [this, &t1, &t2, &t3](int i) -> double {
     return sin(t3[i]) * sin(t2[i] + t1[i]);
   };
-  std::vector<std::vector<double>> Jp(3, std::vector<double>(3, 0.0));
+  Eigen::Matrix3d Jp;
   for (int i = 0; i < 3; ++i) {
-    Jp[i][0] = J_ix(i);
-    Jp[i][1] = J_iy(i);
-    Jp[i][2] = J_iz(i);
+    Jp(i, 0) = J_ix(i);
+    Jp(i, 1) = J_iy(i);
+    Jp(i, 2) = J_iz(i);
   }
 
   // JTheta Calculation
-  std::vector<std::vector<double>> JTheta(3, std::vector<double>(3, 0.0));
+  Eigen::Matrix3d JTheta;
   // Populate the diagonals with AL*sin(t2[i])*sin(t3[i])
-  JTheta[0][0] = this->AL * sin(theta2) * sin(theta3);
-  JTheta[1][1] = this->AL * sin(t22) * sin(t23);
-  JTheta[2][2] = this->AL * sin(t32) * sin(t33);
-  std::vector<std::vector<double>> JTheta_inv(3, std::vector<double>(3, 0.0));
+  JTheta(0, 0) = this->AL * sin(theta2) * sin(theta3);
+  JTheta(1, 1) = this->AL * sin(t22) * sin(t23);
+  JTheta(2, 2) = this->AL * sin(t32) * sin(t33);
 
-  // TODO: Invert JTheta
-  
-  return JTheta_inv * Jp;
+  // Invert JTheta
+  Eigen::Matrix3d JTheta_inv = JTheta.inverse();
+  Eigen::Matrix3d Jacobian = JTheta_inv * Jp;
+  // Return the Jacobian matrix as a 2D vector
+  return std::vector<std::vector<double>>{
+    {Jacobian(0, 0), Jacobian(0, 1), Jacobian(0, 2)},
+    {Jacobian(1, 0), Jacobian(1, 1), Jacobian(1, 2)},
+    {Jacobian(2, 0), Jacobian(2, 1), Jacobian(2, 2)}
+  };
 }
 
 std::vector<double> DeltaKinematics::calcThetaDot(double theta1, double theta2, double theta3, double x_dot, double y_dot, double z_dot) {
-
+  (void)theta1;
+  (void)theta2;
+  (void)theta3;
+  (void)x_dot;
+  (void)y_dot;
+  (void)z_dot;
+  return std::vector<double>{0.0, 0.0, 0.0};
 }
 
 int main(int argc, char * argv[]) {

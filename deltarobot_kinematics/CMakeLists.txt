@@ -8,6 +8,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 # Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(Doxygen)
@@ -19,6 +21,7 @@ find_package(Eigen3 REQUIRED)
 include_directories(
   include/deltarobot_kinematics
   ${deltarobot_interfaces_INCLUDE_DIRS}
+  ${Eigen3_INCLUDE_DIRS}
 )
 
 # Delta Kinematics Node
