@@ -251,7 +251,7 @@ std::pair<std::vector<double>, std::vector<double>> DeltaKinematics::calcAuxAngl
   return std::pair<std::vector<double>, std::vector<double>>{{theta2, t22, t23}, {theta3, t32, t33}};
 }
 
-std::vector<std::vector<double>> DeltaKinematics::calcJacobian(double theta1, double theta2, double theta3) {
+Eigen::Matrix3d DeltaKinematics::calcJacobian(double theta1, double theta2, double theta3) {
   // The Jacobian matrix has 2 components: JTheta and Jp
   // Since this Jacobian will be used to compute the joint velocities, we need the inverse of JTheta
   // Jp * p_dot = JTheta * theta_dot -> theta_dot = JTheta_inv * Jp * p_dot
@@ -292,23 +292,19 @@ std::vector<std::vector<double>> DeltaKinematics::calcJacobian(double theta1, do
 
   // Invert JTheta
   Eigen::Matrix3d JTheta_inv = JTheta.inverse();
-  Eigen::Matrix3d Jacobian = JTheta_inv * Jp;
-  // Return the Jacobian matrix as a 2D vector
-  return std::vector<std::vector<double>>{
-    {Jacobian(0, 0), Jacobian(0, 1), Jacobian(0, 2)},
-    {Jacobian(1, 0), Jacobian(1, 1), Jacobian(1, 2)},
-    {Jacobian(2, 0), Jacobian(2, 1), Jacobian(2, 2)}
-  };
+  return JTheta_inv * Jp;
 }
 
 std::vector<double> DeltaKinematics::calcThetaDot(double theta1, double theta2, double theta3, double x_dot, double y_dot, double z_dot) {
-  (void)theta1;
-  (void)theta2;
-  (void)theta3;
-  (void)x_dot;
-  (void)y_dot;
-  (void)z_dot;
-  return std::vector<double>{0.0, 0.0, 0.0};
+  // # Jp * p_dot = Jtheta * theta_dot, so theta_dot = Jtheta_inv * Jp * p_dot
+  // Jp = self.Jp(*thetas)
+  // Jtheta = self.Jtheta(*thetas)
+  // J = np.linalg.inv(Jtheta) @ Jp
+  // return J @ end_effector_velocity
+  auto J = this->calcJacobian(theta1, theta2, theta3);
+  Eigen::Vector3d p_dot(x_dot, y_dot, z_dot);
+  Eigen::Vector3d theta_dot = J * p_dot;
+  return std::vector<double>{theta_dot(0), theta_dot(1), theta_dot(2)};
 }
 
 int main(int argc, char * argv[]) {

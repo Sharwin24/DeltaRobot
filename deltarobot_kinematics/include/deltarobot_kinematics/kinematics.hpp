@@ -36,7 +36,7 @@ private:
 
   // Jacobian Functions
   std::pair<std::vector<double>, std::vector<double>> calcAuxAngles(double theta1, double theta2, double theta3);
-  std::vector<std::vector<double>> calcJacobian(double theta1, double theta2, double theta3);
+  Eigen::Matrix3d calcJacobian(double theta1, double theta2, double theta3);
   std::vector<double> calcThetaDot(double theta1, double theta2, double theta3, double x_dot, double y_dot, double z_dot);
   
   /// @brief Base Triangle Side Length [mm]
