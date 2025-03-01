@@ -8,6 +8,7 @@
 #include "geometry_msgs/msg/point.hpp"
 #include <math.h>
 #include <vector>
+#include <eigen3/Eigen/Dense>
 
 class DeltaKinematics : public rclcpp::Node {
 public:
