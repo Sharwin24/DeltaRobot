@@ -11,6 +11,7 @@
   <depend>rclcpp</depend>
   <depend>deltarobot_interfaces</depend>
   <depend>geometry_msgs</depend>
+  <depend>Eigen3</depend>
   
 
   <test_depend>ament_lint_auto</test_depend>

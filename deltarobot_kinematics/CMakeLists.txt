@@ -14,6 +14,7 @@ find_package(Doxygen)
 find_package(rclcpp REQUIRED)
 find_package(deltarobot_interfaces REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 include_directories(
   include/deltarobot_kinematics

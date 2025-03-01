@@ -7,6 +7,7 @@
 #include "deltarobot_interfaces/srv/convert_to_joint_trajectory.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include <math.h>
+#include <vector>
 
 class DeltaKinematics : public rclcpp::Node {
 public:
@@ -22,12 +23,21 @@ private:
   rclcpp::Service<DeltaIK>::SharedPtr delta_ik_server;
   rclcpp::Service<ConvertToJointTrajectory>::SharedPtr convert_to_joint_trajectory_server;
   
+  // Service Callbacks
   void forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response);
   void inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response);
   void convertToJointTrajectory(const std::shared_ptr<ConvertToJointTrajectory::Request> request, std::shared_ptr<ConvertToJointTrajectory::Response> response);
 
-  // Helper function for FK to find active link angle when normal to the link's rotation axis (YZ-plane)
-  int deltaFK_AngleYZ(float x0, float y0, float z0, float& theta);
+  // Helper function for IK to find active link angle when normal to the link's rotation axis (YZ-plane)
+  int deltaIK_AngleYZ(float x0, float y0, float z0, float& theta);
+
+  std::vector<float> deltaFK(float theta1, float theta2, float theta3);
+  std::vector<float> deltaIK(float x, float y, float z);
+
+  // Jacobian Functions
+  std::pair<std::vector<double>, std::vector<double>> calcAuxAngles(double theta1, double theta2, double theta3);
+  std::vector<std::vector<double>> calcJacobian(double theta1, double theta2, double theta3);
+  std::vector<double> calcThetaDot(double theta1, double theta2, double theta3, double x_dot, double y_dot, double z_dot);
   
   /// @brief Base Triangle Side Length [mm]
   float SB;
@@ -49,6 +59,9 @@ private:
 
   /// @brief Joint Angle Max [rad]
   float JMax;
+
+  /// @brief Phi Angles [rad]
+  const float phi[3] = { -M_PI_2, M_PI / 6.0, (5.0 * M_PI) / 6.0 };
 };
 
 #endif  // KINEMATICS_HPP_
