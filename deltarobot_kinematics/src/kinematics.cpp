@@ -296,7 +296,7 @@ Eigen::Matrix3d DeltaKinematics::calcJacobian(double theta1, double theta2, doub
 }
 
 std::vector<double> DeltaKinematics::calcThetaDot(double theta1, double theta2, double theta3, double x_dot, double y_dot, double z_dot) {
-  auto J = this->calcJacobian(theta1, theta2, theta3);
+  Eigen::Matrix3d J = this->calcJacobian(theta1, theta2, theta3);
   Eigen::Vector3d p_dot(x_dot, y_dot, z_dot);
   Eigen::Vector3d theta_dot = J * p_dot;
   return std::vector<double>{theta_dot(0), theta_dot(1), theta_dot(2)};
