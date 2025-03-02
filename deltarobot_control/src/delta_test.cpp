@@ -57,7 +57,7 @@ void DeltaTest::testTrajectory(
 
   std::string type = request->type.data;
   std::vector<Point> trajectory;
-  if (type == "straight_up_down") {
+  if (type == "up_down") {
     trajectory = this->straightUpDownTrajectory();
   } else if (type == "pringle") {
     trajectory = this->pringleTrajectory();
@@ -77,24 +77,24 @@ void DeltaTest::testTrajectory(
   auto future_result = this->convert_to_joint_trajectory_client->async_send_request(
     convert_request,
     [this, joint_traj](ServiceResponseFuture future) {
-      auto response = future.get();
-      RCLCPP_INFO(get_logger(), "Received response from convert_to_joint_trajectory service");
-      *joint_traj = response->joint_trajectory;
+    auto response = future.get();
+    // RCLCPP_INFO(get_logger(), "Received response from convert_to_joint_trajectory service");
+    *joint_traj = response->joint_trajectory;
 
-      // Print the joint trajectory
-      RCLCPP_INFO(get_logger(), "Joint trajectory created with %ld points:", joint_traj->size());
-      for (unsigned int i = 0; i < joint_traj->size(); i++) {
-        const auto& joints = joint_traj->at(i);
-        RCLCPP_INFO(get_logger(), "\t Joint Angles %d: (%.2f, %.2f, %.2f) [rad]", i + 1, joints.theta1, joints.theta2, joints.theta3);
-      }
+    // Print the joint trajectory
+    RCLCPP_INFO(get_logger(), "Joint trajectory created with %ld points:", joint_traj->size());
+    // for (unsigned int i = 0; i < joint_traj->size(); i++) {
+    //   const auto& joints = joint_traj->at(i);
+    //   RCLCPP_INFO(get_logger(), "\t Joint Angles %d: (%.2f, %.2f, %.2f) [rad]", i + 1, joints.theta1, joints.theta2, joints.theta3);
+    // }
 
-      RCLCPP_INFO(get_logger(), "Publishing joint trajectory to motors");
-      // Publish the joint trajectory to the motors with a 50ms delay between each point
-      for (unsigned int i = 0; i < joint_traj->size(); i++) {
-        this->joint_pub->publish(joint_traj->at(i));
-        rclcpp::sleep_for(std::chrono::milliseconds(50));
-      }
+    RCLCPP_INFO(get_logger(), "Publishing joint trajectory to motors");
+    // Publish the joint trajectory to the motors with a 50ms delay between each point
+    for (unsigned int i = 0; i < joint_traj->size(); i++) {
+      this->joint_pub->publish(joint_traj->at(i));
+      rclcpp::sleep_for(std::chrono::milliseconds(50));
     }
+  }
   );
   // ---------- END_CITATION [1] ----------
 
@@ -103,34 +103,23 @@ void DeltaTest::testTrajectory(
 }
 
 std::vector<Point> DeltaTest::straightUpDownTrajectory() {
-  // Create a simple up and down trajectory ranging from (0, 0, -100) to (0, 0, -200)
-  // Initial position is (0, 0, -100)
-  // Final position is (0, 0, -200)
-  // Use 10 points to interpolate the trajectory and use IK to obtain joint angles
-  const int num_points = 100;
+  // Create a simple up down trajectory with 4 oscillations between
+  // Z = -100 and Z = -200
+  const int num_points = 300;
   std::vector<Point> trajectory;
 
-  Point initial_position;
-  initial_position.x = 0.0;
-  initial_position.y = 0.0;
-  initial_position.z = -100.0;
-  Point final_position;
-  final_position.x = 0.0;
-  final_position.y = 0.0;
-  final_position.z = -200.0;
+  const float center = -150.0;
+  const float amplitude = 72.0;
+  const int cycles = 12;
 
-  // Add the initial position to the list
-  trajectory.push_back(initial_position);
-
-  // Interpolate the rest of the points between the initial and final positions
-  for (int i = 1; i < num_points - 1; i++) {
-    Point intermediate_position;
-    intermediate_position.x = 0.0;
-    intermediate_position.y = 0.0;
-    intermediate_position.z = initial_position.z - (i * 100.0 / (num_points - 1));
-    trajectory.push_back(intermediate_position);
+  for (int i = 0; i < num_points; i++) {
+    double t = static_cast<double>(i) / (num_points - 1);
+    Point intermediate_pos;
+    intermediate_pos.x = 0.0;
+    intermediate_pos.y = 0.0;
+    intermediate_pos.z = center + amplitude * sin(2 * M_PI * cycles * t);
+    trajectory.push_back(intermediate_pos);
   }
-  trajectory.push_back(final_position);
 
   // Log the created trajectory
   RCLCPP_INFO(get_logger(), "Trajectory created with %ld points:", trajectory.size());
@@ -141,6 +130,7 @@ std::vector<Point> DeltaTest::straightUpDownTrajectory() {
 
   return trajectory;
 }
+
 std::vector<Point> DeltaTest::pringleTrajectory() {
   // Circle Trajectory in XY plane while Z coordinate goes through 2 cycles of a sine wave
   const int num_points = 200;
@@ -172,10 +162,10 @@ std::vector<Point> DeltaTest::pringleTrajectory() {
 
   // Log the created trajectory
   RCLCPP_INFO(get_logger(), "EE Trajectory created with %ld points:", trajectory.size());
-  for (int i = 0; i < num_points; i++) {
-    Point p = trajectory[i];
-    RCLCPP_INFO(get_logger(), "\t EE Point %d: (%.2f, %.2f, %.2f)", i + 1, p.x, p.y, p.z);
-  }
+  // for (int i = 0; i < num_points; i++) {
+  //   Point p = trajectory[i];
+  //   RCLCPP_INFO(get_logger(), "\t EE Point %d: (%.2f, %.2f, %.2f)", i + 1, p.x, p.y, p.z);
+  // }
 
   return trajectory;
 }
