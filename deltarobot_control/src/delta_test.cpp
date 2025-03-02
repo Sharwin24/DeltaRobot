@@ -123,10 +123,10 @@ std::vector<Point> DeltaTest::straightUpDownTrajectory() {
 
   // Log the created trajectory
   RCLCPP_INFO(get_logger(), "Trajectory created with %ld points:", trajectory.size());
-  for (int i = 0; i < num_points; i++) {
-    Point p = trajectory[i];
-    RCLCPP_INFO(get_logger(), "\t EE Point %d: (%.2f, %.2f, %.2f)", i, p.x, p.y, p.z);
-  }
+  // for (int i = 0; i < num_points; i++) {
+  //   Point p = trajectory[i];
+  //   RCLCPP_INFO(get_logger(), "\t EE Point %d: (%.2f, %.2f, %.2f)", i, p.x, p.y, p.z);
+  // }
 
   return trajectory;
 }
