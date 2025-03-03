@@ -1,5 +1,5 @@
 <launch>
-  <node pkg="deltarobot_control" exec="delta_test" name="delta_test" />
+  <node pkg="deltarobot_trajectory_generator" exec="delta_trajectory_generator" name="delta_trajectory_generator" />
 <!-- Include the launch files from deltrarobot_kinematics and motor control -->
   <include file="$(find-pkg-share deltarobot_kinematics)/launch/kinematics.launch.xml"/>
   <include file="$(find-pkg-share deltarobot_motor_control)/launch/motor_control.launch.xml"/>

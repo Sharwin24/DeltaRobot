@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(deltarobot_control)
+project(deltarobot_trajectory_generator)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,18 +16,18 @@ find_package(kalman_filter REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 include_directories(
-  include/deltarobot_control
+  include/deltarobot_trajectory_generator
   ${deltarobot_interfaces_INCLUDE_DIRS}
 )
 
 # Delta Testing Node
-add_executable(delta_test src/delta_test.cpp)
-ament_target_dependencies(delta_test rclcpp deltarobot_interfaces geometry_msgs)
-target_link_libraries(delta_test ${deltarobot_interfaces_LIBRARIES})
+add_executable(delta_trajectory_generator src/delta_trajectory_generator.cpp)
+ament_target_dependencies(delta_trajectory_generator rclcpp deltarobot_interfaces geometry_msgs)
+target_link_libraries(delta_trajectory_generator ${deltarobot_interfaces_LIBRARIES})
 
 # Install
 install(TARGETS
-  delta_test
+  delta_trajectory_generator
   DESTINATION lib/${PROJECT_NAME}
 )
 

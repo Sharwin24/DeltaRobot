@@ -8,10 +8,10 @@
 #include "deltarobot_interfaces/srv/convert_to_joint_trajectory.hpp"
 #include "geometry_msgs/msg/point.hpp"
 
-class DeltaTest : public rclcpp::Node {
+class DeltaTrajectoryGenerator : public rclcpp::Node {
   public:
-  DeltaTest();
-  ~DeltaTest() = default;
+  DeltaTrajectoryGenerator();
+  ~DeltaTrajectoryGenerator() = default;
   
   private:
   using TestTraj = deltarobot_interfaces::srv::TestTrajectory;

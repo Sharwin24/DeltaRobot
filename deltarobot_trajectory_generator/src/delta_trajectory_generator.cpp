@@ -1,5 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-#include "delta_test.hpp"
+#include "delta_trajectory_generator.hpp"
 
 // Include all the custom messages and services
 #include "deltarobot_interfaces/msg/delta_joints.hpp"
@@ -20,12 +20,12 @@ using TestTraj = deltarobot_interfaces::srv::TestTrajectory;
 using ConvertToJointTrajectory = deltarobot_interfaces::srv::ConvertToJointTrajectory;
 using ServiceResponseFuture = rclcpp::Client<ConvertToJointTrajectory>::SharedFuture;
 
-DeltaTest::DeltaTest() : Node("delta_test") {
+DeltaTrajectoryGenerator::DeltaTrajectoryGenerator() : Node("delta_test") {
   RCLCPP_INFO(get_logger(), "DeltaTest node started");
 
   this->testing_trajectory_server = create_service<TestTraj>(
     "test_trajectory",
-    std::bind(&DeltaTest::testTrajectory, this, std::placeholders::_1, std::placeholders::_2)
+    std::bind(&DeltaTrajectoryGenerator::testTrajectory, this, std::placeholders::_1, std::placeholders::_2)
   );
 
   this->joint_pub = create_publisher<DeltaJoints>("/set_joints", 10);
@@ -51,7 +51,7 @@ DeltaTest::DeltaTest() : Node("delta_test") {
   }
 }
 
-void DeltaTest::testTrajectory(
+void DeltaTrajectoryGenerator::testTrajectory(
   std::shared_ptr<TestTraj::Request> request, std::shared_ptr<TestTraj::Response> response) {
   RCLCPP_INFO(get_logger(), "Received request for test trajectory");
 
@@ -102,7 +102,7 @@ void DeltaTest::testTrajectory(
   response->success = true;
 }
 
-std::vector<Point> DeltaTest::straightUpDownTrajectory() {
+std::vector<Point> DeltaTrajectoryGenerator::straightUpDownTrajectory() {
   // Create a simple up down trajectory with 4 oscillations between
   // Z = -100 and Z = -200
   const int num_points = 300;
@@ -131,7 +131,7 @@ std::vector<Point> DeltaTest::straightUpDownTrajectory() {
   return trajectory;
 }
 
-std::vector<Point> DeltaTest::pringleTrajectory() {
+std::vector<Point> DeltaTrajectoryGenerator::pringleTrajectory() {
   // Circle Trajectory in XY plane while Z coordinate goes through 2 cycles of a sine wave
   const int num_points = 200;
   const float circle_center_z = -180.0;
@@ -172,7 +172,7 @@ std::vector<Point> DeltaTest::pringleTrajectory() {
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<DeltaTest>());
+  rclcpp::spin(std::make_shared<DeltaTrajectoryGenerator>());
   rclcpp::shutdown();
   return 0;
 }
