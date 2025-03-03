@@ -7,10 +7,13 @@
 ///   passive_link_length (float64): The center distance (joint to joint) of the passive links [mm]
 ///   passive_link_width (float64): The width of the passive links [mm]
 ///   end_effector_side_length (float64): The side length of the equilateral triangle defining the end effector [mm]
+///   joint_min (float64): The minimum joint angle [rad]
+///   joint_max (float64): The maximum joint angle [rad]
 ///
 /// SERVICES:
 ///   ~/delta_fk (deltarobot_interfaces::srv::DeltaFK): Computes the end effector position given the joint angles (forward kinematics)
 ///   ~/delta_ik (deltarobot_interfaces::srv::DeltaIK): Computes the joint angles given the end effector position (inverse kinematics)
+///   ~/convert_to_joint_trajectory (deltarobot_interfaces::srv::ConvertToJointTrajectory): Converts an end effector trajectory to a joint trajectory
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/node_options.hpp"
@@ -54,7 +57,7 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
 
   // Create FK and IK servers
   delta_fk_server = create_service<DeltaFK>(
-    "delta_fk", 
+    "delta_fk",
     std::bind(&DeltaKinematics::forwardKinematics, this, std::placeholders::_1, std::placeholders::_2)
   );
   delta_ik_server = create_service<DeltaIK>(
@@ -195,9 +198,9 @@ std::pair<std::vector<double>, std::vector<double>> DeltaKinematics::calcAuxAngl
   std::vector<float> position = this->deltaFK(theta1, theta2, theta3);
 
   const double UP = (sqrt3 / 3) * this->SP;
-  const Eigen::Vector3d P = { position[0], position[1], position[2] };
-  const Eigen::Vector3d D = { UP - this->AL, 0, 0 };
-  
+  const Eigen::Vector3d P = {position[0], position[1], position[2]};
+  const Eigen::Vector3d D = {UP - this->AL, 0, 0};
+
   Eigen::Matrix3d C;
   for (int i = 0; i < 3; ++i) {
     double phi_i = this->phi[i];
@@ -232,15 +235,14 @@ std::pair<std::vector<double>, std::vector<double>> DeltaKinematics::calcAuxAngl
   double t23 = acos(t23_numerator / t23_denominator);
   // theta_1i is the actuated angles which were passed into the function
   // We only need to return the auxiliary angles
-  return std::make_pair(std::vector<double>{theta2, t22, t23},
-                        std::vector<double>{theta3, t32, t33});
+  return std::make_pair(std::vector<double>{theta2, t22, t23}, std::vector<double>{theta3, t32, t33});
 }
 
 Eigen::Matrix3d DeltaKinematics::calcJacobian(double theta1, double theta2, double theta3) {
   // The Jacobian matrix has 2 components: JTheta and Jp
   // Since this Jacobian will be used to compute the joint velocities, we need the inverse of JTheta
   // Jp * p_dot = JTheta * theta_dot -> theta_dot = JTheta_inv * Jp * p_dot
-  
+
   // Obtain auxiliary angles
   auto aux_angles = this->calcAuxAngles(theta1, theta2, theta3);
   const std::vector<double> t1 = {theta1, theta2, theta3};
@@ -287,7 +289,7 @@ std::vector<double> DeltaKinematics::calcThetaDot(double theta1, double theta2, 
   return std::vector<double>{theta_dot(0), theta_dot(1), theta_dot(2)};
 }
 
-int main(int argc, char * argv[]) {
+int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<DeltaKinematics>());
   rclcpp::shutdown();
