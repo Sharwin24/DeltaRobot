@@ -5,12 +5,14 @@
 #define ADDR_TORQUE_ENABLE 64
 #define ADDR_GOAL_POSITION 116
 #define ADDR_PRESENT_POSITION 132
+#define ADDR_GOAL_VELOCITY 104
+#define ADDR_PRESENT_VELOCITY 128
 
 // Protocol version
 #define PROTOCOL_VERSION 2.0  // Default Protocol version of DYNAMIXEL X series.
 
 // Default setting
-#define BAUDRATE 57600  // Default Baudrate of DYNAMIXEL X series
+#define BAUDRATE 115200  // Default Baudrate of DYNAMIXEL X series
 #define DEVICE_NAME "/dev/ttyUSB0"  // [Linux]: "/dev/ttyUSB*", [Windows]: "COM*"
 
 // Converting from degrees to motor position
@@ -143,12 +145,12 @@ void DeltaMotorControl::initializeDynamixels() {
     RCLCPP_ERROR(this->get_logger(), "Failed to set the baudrate!");
   }
 
-  // Use Position Control Mode
+  // Set Control Mode
   dxl_comm_result = this->packetHandler->write1ByteTxRx(
     this->portHandler,
     BROADCAST_ID,
     ADDR_OPERATING_MODE,
-    3,
+    3, // 3 is for Position Control Mode, 1 is for Velocity Control Mode
     &dxl_error
   );
 
