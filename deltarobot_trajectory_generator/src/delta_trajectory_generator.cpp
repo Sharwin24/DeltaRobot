@@ -16,16 +16,16 @@
 using Point = geometry_msgs::msg::Point;
 using DeltaIK = deltarobot_interfaces::srv::DeltaIK;
 using DeltaJoints = deltarobot_interfaces::msg::DeltaJoints;
-using TestTraj = deltarobot_interfaces::srv::TestTrajectory;
+using PlayDemoTraj = deltarobot_interfaces::srv::PlayDemoTrajectory;
 using ConvertToJointTrajectory = deltarobot_interfaces::srv::ConvertToJointTrajectory;
 using ServiceResponseFuture = rclcpp::Client<ConvertToJointTrajectory>::SharedFuture;
 
 DeltaTrajectoryGenerator::DeltaTrajectoryGenerator() : Node("delta_test") {
   RCLCPP_INFO(get_logger(), "DeltaTest node started");
 
-  this->testing_trajectory_server = create_service<TestTraj>(
-    "test_trajectory",
-    std::bind(&DeltaTrajectoryGenerator::testTrajectory, this, std::placeholders::_1, std::placeholders::_2)
+  this->demo_traj_server = create_service<PlayDemoTraj>(
+    "play_demo_trajectory",
+    std::bind(&DeltaTrajectoryGenerator::playDemoTrajectory, this, std::placeholders::_1, std::placeholders::_2)
   );
 
   this->joint_pub = create_publisher<DeltaJoints>("/set_joints", 10);
@@ -51,18 +51,22 @@ DeltaTrajectoryGenerator::DeltaTrajectoryGenerator() : Node("delta_test") {
   }
 }
 
-void DeltaTrajectoryGenerator::testTrajectory(
-  std::shared_ptr<TestTraj::Request> request, std::shared_ptr<TestTraj::Response> response) {
-  RCLCPP_INFO(get_logger(), "Received request for test trajectory");
-
-  std::string type = request->type.data;
-  std::vector<Point> trajectory;
-  if (type == "up_down") {
-    trajectory = this->straightUpDownTrajectory();
-  } else if (type == "pringle") {
-    trajectory = this->pringleTrajectory();
-  } else {
-    RCLCPP_ERROR(get_logger(), "Invalid trajectory type: %s", type.c_str());
+void DeltaTrajectoryGenerator::playDemoTrajectory(
+  std::shared_ptr<PlayDemoTraj::Request> request, std::shared_ptr<PlayDemoTraj::Response> response) {
+    
+    std::string type = request->type.data;
+    std::vector<Point> trajectory;
+    if (type == "up_down") {
+      trajectory = this->straightUpDownTrajectory();
+    } else if (type == "pringle") {
+      trajectory = this->pringleTrajectory();
+    } else {
+    const std::vector<std::string> available_demos = {"up_down", "pringle"};
+    RCLCPP_ERROR(get_logger(), "Invalid demo trajectory: %s", type.c_str());
+    RCLCPP_ERROR(get_logger(), "Available demo trajectories: %s", std::accumulate(
+      std::next(available_demos.begin()), available_demos.end(), available_demos[0],
+      [](std::string a, std::string b) { return a + ", " + b; }
+    ).c_str());
     response->success = false;
     return;
   }

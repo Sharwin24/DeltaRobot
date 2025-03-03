@@ -41,7 +41,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetDynamixelPositions.srv"
   "srv/PlayFKTrajectory.srv"
   "srv/PlayIKTrajectory.srv"
-  "srv/TestTrajectory.srv"
+  "srv/PlayDemoTrajectory.srv"
   "srv/ConvertToJointTrajectory.srv"
   DEPENDENCIES builtin_interfaces std_msgs geometry_msgs
 )
