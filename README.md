@@ -2,7 +2,7 @@
 Author: Sharwin Patil (*2025 MSR Winter Project*)
 
 <div style="text-align: center;">
-  <img src="images/workspace.png" alt="Delta Robot Workspace" style="border-radius: 50%; width: 300px; height: 300px;">
+  <img src="images/DeltaCircleTrajectory.gif" alt="Delta Robot Workspace" style="border-radius: 50%; width: 300px; height: 300px;">
 </div>
 
 # ROS Package Structure
