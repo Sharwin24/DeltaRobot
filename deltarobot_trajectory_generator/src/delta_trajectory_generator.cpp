@@ -20,8 +20,8 @@ using PlayDemoTraj = deltarobot_interfaces::srv::PlayDemoTrajectory;
 using ConvertToJointTrajectory = deltarobot_interfaces::srv::ConvertToJointTrajectory;
 using ServiceResponseFuture = rclcpp::Client<ConvertToJointTrajectory>::SharedFuture;
 
-DeltaTrajectoryGenerator::DeltaTrajectoryGenerator() : Node("delta_test") {
-  RCLCPP_INFO(get_logger(), "DeltaTest node started");
+DeltaTrajectoryGenerator::DeltaTrajectoryGenerator() : Node("delta_trajectory_generator") {
+  RCLCPP_INFO(get_logger(), "DeltaTrajectoryGenerator node started");
 
   this->demo_traj_server = create_service<PlayDemoTraj>(
     "play_demo_trajectory",
