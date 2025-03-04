@@ -45,8 +45,8 @@ private:
   // Helper function for IK to find active link angle when normal to the link's rotation axis (YZ-plane)
   int deltaIK_AngleYZ(float x0, float y0, float z0, float& theta);
 
-  std::vector<float> deltaFK(float theta1, float theta2, float theta3);
-  std::vector<float> deltaIK(float x, float y, float z);
+  Point deltaFK(float theta1, float theta2, float theta3);
+  DeltaJoints deltaIK(float x, float y, float z);
 
   // Jacobian Functions
   std::pair<std::vector<double>, std::vector<double>> calcAuxAngles(double theta1, double theta2, double theta3);

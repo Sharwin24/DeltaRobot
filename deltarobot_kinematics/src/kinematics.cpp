@@ -82,14 +82,14 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
 }
 
 void DeltaKinematics::forwardKinematics(const std::shared_ptr<DeltaFK::Request> request, std::shared_ptr<DeltaFK::Response> response) {
-  std::vector<float> position = this->deltaFK(
+  Point position = this->deltaFK(
     request->joint_angles.theta1, request->joint_angles.theta2, request->joint_angles.theta3
   );
 
   // Update the response data (end effector position)
-  response->solution.x = position[0];
-  response->solution.y = position[1];
-  response->solution.z = position[2];
+  response->solution.x = position.x;
+  response->solution.y = position.y;
+  response->solution.z = position.z;
 }
 
 int DeltaKinematics::deltaIK_AngleYZ(float x0, float y0, float z0, float& theta) {
@@ -108,14 +108,14 @@ int DeltaKinematics::deltaIK_AngleYZ(float x0, float y0, float z0, float& theta)
 }
 
 void DeltaKinematics::inverseKinematics(const std::shared_ptr<DeltaIK::Request> request, std::shared_ptr<DeltaIK::Response> response) {
-  std::vector<float> thetas = this->deltaIK(
+  DeltaJoints joints = this->deltaIK(
     request->solution.x, request->solution.y, request->solution.z
   );
 
   // Update the response data (joint angles)
-  response->joint_angles.theta1 = thetas[0];
-  response->joint_angles.theta2 = thetas[1];
-  response->joint_angles.theta3 = thetas[2];
+  response->joint_angles.theta1 = joints.theta1;
+  response->joint_angles.theta2 = joints.theta2;
+  response->joint_angles.theta3 = joints.theta3;
 }
 
 void DeltaKinematics::convertToJointTrajectory(const std::shared_ptr<ConvertToJointTrajectory::Request> request, std::shared_ptr<ConvertToJointTrajectory::Response> response) {
@@ -125,12 +125,12 @@ void DeltaKinematics::convertToJointTrajectory(const std::shared_ptr<ConvertToJo
 
   // Iterate through the trajectory and convert each point to joint angles
   for (auto point : trajectory) {
-    std::vector<float> thetas = this->deltaIK(point.x, point.y, point.z);
+    DeltaJoints joints = this->deltaIK(point.x, point.y, point.z);
 
     DeltaJoints joint_angles;
-    joint_angles.theta1 = thetas[0];
-    joint_angles.theta2 = thetas[1];
-    joint_angles.theta3 = thetas[2];
+    joint_angles.theta1 = joints.theta1;
+    joint_angles.theta2 = joints.theta2;
+    joint_angles.theta3 = joints.theta3;
 
     joint_trajectory.push_back(joint_angles);
   }
@@ -154,16 +154,16 @@ void DeltaKinematics::convertToJointVelTrajectory(const std::shared_ptr<ConvertT
   // Iterate through the trajectory and convert each point to joint angles
   for (size_t i = 0; i < ref_traj.size(); ++i) {
     Point p = ref_traj[i]; // End effector position
-    std::vector<float> thetas = this->deltaIK(p.x, p.y, p.z);
+    DeltaJoints joints = this->deltaIK(p.x, p.y, p.z);
     EEVelocity v = ee_vel[i]; // End effector velocity
-    joint_velocities.push_back(this->calcThetaDot(thetas[0], thetas[1], thetas[2], v.x_vel, v.y_vel, v.z_vel));
+    joint_velocities.push_back(this->calcThetaDot(joints.theta1, joints.theta2, joints.theta3, v.x_vel, v.y_vel, v.z_vel));
   }
 
   // Update the response data (joint velocity trajectory)
   response->joint_vel_trajectory = joint_velocities;
 }
 
-std::vector<float> DeltaKinematics::deltaFK(float theta1, float theta2, float theta3) {
+Point DeltaKinematics::deltaFK(float theta1, float theta2, float theta3) {
   float x = 0.0;
   float y = 0.0;
   float z = 0.0;
@@ -204,10 +204,14 @@ std::vector<float> DeltaKinematics::deltaFK(float theta1, float theta2, float th
     x = (a1 * z + b1) / dnm;
     y = (a2 * z + b2) / dnm;
   }
-  return std::vector<float>{x, y, z};
+  Point p;
+  p.x = x;
+  p.y = y;
+  p.z = z;
+  return p;
 }
 
-std::vector<float> DeltaKinematics::deltaIK(float x, float y, float z) {
+DeltaJoints DeltaKinematics::deltaIK(float x, float y, float z) {
   float theta1 = 0.0;
   float theta2 = 0.0;
   float theta3 = 0.0;
@@ -223,15 +227,19 @@ std::vector<float> DeltaKinematics::deltaIK(float x, float y, float z) {
   } else {
     RCLCPP_ERROR(this->get_logger(), "DeltaIK: Non-existing point (%f, %f, %f) [mm]", x, y, z);
   }
-  return std::vector<float>{theta1, theta2, theta3};
+  DeltaJoints joints;
+  joints.theta1 = theta1;
+  joints.theta2 = theta2;
+  joints.theta3 = theta3;
+  return joints;
 }
 
 std::pair<std::vector<double>, std::vector<double>> DeltaKinematics::calcAuxAngles(double theta1, double theta2, double theta3) {
   // First determine the end effector position using FK
-  std::vector<float> position = this->deltaFK(theta1, theta2, theta3);
+  Point position = this->deltaFK(theta1, theta2, theta3);
 
   const double UP = (sqrt3 / 3) * this->SP;
-  const Eigen::Vector3d P = {position[0], position[1], position[2]};
+  const Eigen::Vector3d P = {position.x, position.y, position.z};
   const Eigen::Vector3d D = {UP - this->AL, 0, 0};
 
   Eigen::Matrix3d C;
