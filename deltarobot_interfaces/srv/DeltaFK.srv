@@ -1,3 +1,4 @@
 DeltaJoints joint_angles
 ---
 geometry_msgs/Point solution # [mm]
+bool success
