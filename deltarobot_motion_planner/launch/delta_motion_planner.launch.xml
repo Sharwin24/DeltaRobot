@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="deltarobot_motion_planner" exec="delta_motion_planner" name="delta_motion_planner" />
+<!-- Include the launch files from deltrarobot_kinematics and motor control -->
+  <include file="$(find-pkg-share deltarobot_trajectory_generator)/launch/delta_traj_gen.launch.xml"/>
+  <include file="$(find-pkg-share deltarobot_kinematics)/launch/kinematics.launch.xml"/>
+  <include file="$(find-pkg-share deltarobot_motor_control)/launch/motor_control.launch.xml"/>
+  <include file="$(find-pkg-share kalman_filter)/launch/sensors.launch.xml"/>
+</launch>
