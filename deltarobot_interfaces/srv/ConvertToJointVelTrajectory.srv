@@ -1,4 +1,3 @@
 geometry_msgs/Point[] end_effector_trajectory # The end effector trajectory
-DeltaJoints[] joint_trajectory # The same trajectory but in the joint space
 ---
 DeltaJointVels[] joint_vel_trajectory # The joint velocity trajectory

@@ -19,6 +19,7 @@
 #include "rclcpp/node_options.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "deltarobot_interfaces/msg/delta_joints.hpp"
+#include "deltarobot_interfaces/msg/delta_joint_vels.hpp"
 #include "kinematics.hpp"
 #include <vector>
 #include <math.h>
@@ -33,6 +34,7 @@ const float tan30 = 1 / sqrt3;
 
 using Point = geometry_msgs::msg::Point;
 using DeltaJoints = deltarobot_interfaces::msg::DeltaJoints;
+using DeltaJointVels = deltarobot_interfaces::msg::DeltaJointVels;
 
 DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   RCLCPP_INFO(this->get_logger(), "DeltaKinematics Started");
@@ -56,19 +58,26 @@ DeltaKinematics::DeltaKinematics() : Node("delta_kinematics") {
   this->JMax = this->get_parameter("joint_max").as_double();
 
   // Create FK and IK servers
-  delta_fk_server = create_service<DeltaFK>(
+  this->delta_fk_server = create_service<DeltaFK>(
     "delta_fk",
     std::bind(&DeltaKinematics::forwardKinematics, this, std::placeholders::_1, std::placeholders::_2)
   );
-  delta_ik_server = create_service<DeltaIK>(
+
+  this->delta_ik_server = create_service<DeltaIK>(
     "delta_ik",
     std::bind(&DeltaKinematics::inverseKinematics, this, std::placeholders::_1, std::placeholders::_2)
   );
 
   // Create ConvertToJointTrajectory server
-  convert_to_joint_trajectory_server = create_service<ConvertToJointTrajectory>(
+  this->convert_to_joint_trajectory_server = create_service<ConvertToJointTrajectory>(
     "convert_to_joint_trajectory",
     std::bind(&DeltaKinematics::convertToJointTrajectory, this, std::placeholders::_1, std::placeholders::_2)
+  );
+
+  // Create ConvertToJointVelTrajectory server
+  this->convert_to_joint_vel_trajectory_server = create_service<ConvertToJointVelTrajectory>(
+    "convert_to_joint_vel_trajectory",
+    std::bind(&DeltaKinematics::convertToJointVelTrajectory, this, std::placeholders::_1, std::placeholders::_2)
   );
 }
 
@@ -128,6 +137,30 @@ void DeltaKinematics::convertToJointTrajectory(const std::shared_ptr<ConvertToJo
 
   // Update the response data (joint trajectory)
   response->joint_trajectory = joint_trajectory;
+}
+
+void DeltaKinematics::convertToJointVelTrajectory(const std::shared_ptr<ConvertToJointVelTrajectory::Request> request, std::shared_ptr<ConvertToJointVelTrajectory::Response> response) {
+  // Locally save the request data (end effector trajectory and velocities)
+  std::vector<Point> ref_traj = request->end_effector_trajectory;
+  std::vector <DeltaJointVels> joint_velocities;
+  const size_t N = ref_traj.size();
+  if (N == 0 || N == 1) return;
+  // Create a time vector from 0 to 1 with equal intervals
+  double dt = 1.0 / (N - 1);
+
+  // Compute end effector velocities over the reference trajectory using gradient
+  std::vector<EEVelocity> ee_vel = this->computeGradient(ref_traj, dt);
+
+  // Iterate through the trajectory and convert each point to joint angles
+  for (size_t i = 0; i < ref_traj.size(); ++i) {
+    Point p = ref_traj[i]; // End effector position
+    std::vector<float> thetas = this->deltaIK(p.x, p.y, p.z);
+    EEVelocity v = ee_vel[i]; // End effector velocity
+    joint_velocities.push_back(this->calcThetaDot(thetas[0], thetas[1], thetas[2], v.x_vel, v.y_vel, v.z_vel));
+  }
+
+  // Update the response data (joint velocity trajectory)
+  response->joint_vel_trajectory = joint_velocities;
 }
 
 std::vector<float> DeltaKinematics::deltaFK(float theta1, float theta2, float theta3) {
@@ -282,11 +315,40 @@ Eigen::Matrix3d DeltaKinematics::calcJacobian(double theta1, double theta2, doub
   return JTheta_inv * Jp;
 }
 
-std::vector<double> DeltaKinematics::calcThetaDot(double theta1, double theta2, double theta3, double x_dot, double y_dot, double z_dot) {
+DeltaJointVels DeltaKinematics::calcThetaDot(double theta1, double theta2, double theta3, double x_dot, double y_dot, double z_dot) {
   Eigen::Matrix3d J = this->calcJacobian(theta1, theta2, theta3);
   Eigen::Vector3d p_dot(x_dot, y_dot, z_dot);
   Eigen::Vector3d theta_dot = J * p_dot;
-  return std::vector<double>{theta_dot(0), theta_dot(1), theta_dot(2)};
+  DeltaJointVels joint_vels;
+  joint_vels.theta1_vel = theta_dot(0);
+  joint_vels.theta2_vel = theta_dot(1);
+  joint_vels.theta3_vel = theta_dot(2);
+  return joint_vels;
+}
+
+std::vector<EEVelocity> DeltaKinematics::computeGradient(const std::vector<Point>& position_data, double dt) {
+  size_t n = position_data.size();
+  std::vector<EEVelocity> velocities(n, {0.0, 0.0, 0.0});
+  if (n == 0 || n == 1) return velocities;
+
+  // Use forward difference for the first point
+  velocities[0].x_vel = (position_data[1].x - position_data[0].x) / dt;
+  velocities[0].y_vel = (position_data[1].y - position_data[0].y) / dt;
+  velocities[0].z_vel = (position_data[1].z - position_data[0].z) / dt;
+
+  // Use central difference for interior points
+  for (size_t i = 1; i < n - 1; ++i) {
+    velocities[i].x_vel = (position_data[i + 1].x - position_data[i - 1].x) / (2 * dt);
+    velocities[i].y_vel = (position_data[i + 1].y - position_data[i - 1].y) / (2 * dt);
+    velocities[i].z_vel = (position_data[i + 1].z - position_data[i - 1].z) / (2 * dt);
+  }
+
+  // Use backward difference for the last point
+  velocities[n - 1].x_vel = (position_data[n - 1].x - position_data[n - 2].x) / dt;
+  velocities[n - 1].y_vel = (position_data[n - 1].y - position_data[n - 2].y) / dt;
+  velocities[n - 1].z_vel = (position_data[n - 1].z - position_data[n - 2].z) / dt;
+
+  return velocities;
 }
 
 int main(int argc, char* argv[]) {
