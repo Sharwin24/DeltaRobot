@@ -13,12 +13,14 @@
 #include "geometry_msgs/msg/point.hpp"
 #include <math.h>
 
+template<typename T>
+using ServiceResponseFuture = typename rclcpp::Client<T>::SharedFuture;
+
 using Point = geometry_msgs::msg::Point;
 using DeltaIK = deltarobot_interfaces::srv::DeltaIK;
 using DeltaJoints = deltarobot_interfaces::msg::DeltaJoints;
 using PlayDemoTraj = deltarobot_interfaces::srv::PlayDemoTrajectory;
 using ConvertToJointTrajectory = deltarobot_interfaces::srv::ConvertToJointTrajectory;
-using ServiceResponseFuture = rclcpp::Client<ConvertToJointTrajectory>::SharedFuture;
 
 DeltaMotionPlanner::DeltaMotionPlanner() : Node("delta_motion_planner") {
   RCLCPP_INFO(get_logger(), "DeltaMotionPlanner node started");
@@ -29,14 +31,84 @@ DeltaMotionPlanner::DeltaMotionPlanner() : Node("delta_motion_planner") {
   );
 
   this->joint_pub = this->create_publisher<DeltaJoints>("set_joints", 10);
+
+  this->delta_ik_client = create_client<DeltaIK>("delta_ik");
+  // Wait until service is ready
+  while (!this->delta_ik_client->wait_for_service(std::chrono::seconds(2))) {
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(get_logger(), "Interrupted while waiting for the service. Exiting.");
+      return;
+    }
+    RCLCPP_INFO(get_logger(), "Service not available, waiting again...");
+  }
+
+  this->delta_fk_client = create_client<DeltaFK>("delta_fk");
+  // Wait until service is ready
+  while (!this->delta_fk_client->wait_for_service(std::chrono::seconds(2))) {
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(get_logger(), "Interrupted while waiting for the service. Exiting.");
+      return;
+    }
+    RCLCPP_INFO(get_logger(), "Service not available, waiting again...");
+  }
+
+  this->convert_to_joint_trajectory_client = create_client<ConvertToJointTrajectory>("convert_to_joint_trajectory");
+  // Wait until service is ready
+  while (!this->convert_to_joint_trajectory_client->wait_for_service(std::chrono::seconds(2))) {
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(get_logger(), "Interrupted while waiting for the service. Exiting.");
+      return;
+    }
+    RCLCPP_INFO(get_logger(), "Service not available, waiting again...");
+  }
 }
 
-void DeltaMotionPlanner::publishMotorCommands(const std::vector<DeltaJoints>& joint_traj) {
-  // Publish the joint trajectory to the motors with a 50ms delay between each point
+void DeltaMotionPlanner::publishMotorCommands(const std::vector<DeltaJoints>& joint_traj, const unsigned int delay_ms) {
+  // Publish the joint trajectory to the motors with a small delay [ms] between each point
   for (unsigned int i = 0; i < joint_traj.size(); i++) {
     this->joint_pub->publish(joint_traj[i]);
-    rclcpp::sleep_for(std::chrono::milliseconds(50));
+    rclcpp::sleep_for(std::chrono::milliseconds(delay_ms));
   }
+}
+
+void DeltaMotionPlanner::moveToPoint(const Point& point) {
+  // Perform IK to get the joint angles and to ensure if the point is reachable
+  auto ik_request = std::make_shared<DeltaIK::Request>();
+  ik_request->solution = point;
+
+  auto future_result = this->delta_ik_client->async_send_request(
+    ik_request,
+    [this](ServiceResponseFuture<DeltaIK> future) {
+      auto response = future.get();
+      if (response->success) {
+        // If the IK solution is valid, move to the point
+        std::vector<DeltaJoints> joint_traj = {response->joint_angles};
+        this->publishMotorCommands(joint_traj, 0);
+      } else {
+        RCLCPP_ERROR(get_logger(), "IK solution not found for the given end effector point");
+      }
+    }
+  );
+}
+
+void DeltaMotionPlanner::moveToConfiguration(const DeltaJoints& joints) {
+  // Before publishing joint angles, ensure the request is valid using FK
+  auto fk_request = std::make_shared<DeltaFK::Request>();
+  fk_request->joint_angles = joints;
+
+  auto future_result = this->delta_fk_client->async_send_request(
+    fk_request,
+    [this, joints](ServiceResponseFuture<DeltaFK> future) {
+      auto response = future.get();
+      if (response->success) {
+        // If the FK solution is valid, move to the configuration
+        std::vector<DeltaJoints> joint_traj = {joints};
+        this->publishMotorCommands(joint_traj, 0);
+      } else {
+        RCLCPP_ERROR(get_logger(), "FK solution not found for the given joint angles");
+      }
+    }
+  );
 }
 
 void DeltaMotionPlanner::playDemoTrajectory(
@@ -68,7 +140,7 @@ void DeltaMotionPlanner::playDemoTrajectory(
   // ---------- BEGIN_CITATION [1] ----------
   auto future_result = this->convert_to_joint_trajectory_client->async_send_request(
     convert_request,
-    [this, joint_traj](ServiceResponseFuture future) {
+    [this, joint_traj](ServiceResponseFuture<ConvertToJointTrajectory> future) {
     auto response = future.get();
     // RCLCPP_INFO(get_logger(), "Received response from convert_to_joint_trajectory service");
     *joint_traj = response->joint_trajectory;
@@ -82,10 +154,7 @@ void DeltaMotionPlanner::playDemoTrajectory(
 
     RCLCPP_INFO(get_logger(), "Publishing joint trajectory to motors");
     // Publish the joint trajectory to the motors with a 50ms delay between each point
-    for (unsigned int i = 0; i < joint_traj->size(); i++) {
-      this->joint_pub->publish(joint_traj->at(i));
-      rclcpp::sleep_for(std::chrono::milliseconds(50));
-    }
+    this->publishMotorCommands(*joint_traj, 50);
   }
   );
   // ---------- END_CITATION [1] ----------

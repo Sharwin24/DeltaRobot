@@ -13,11 +13,13 @@
 #include "geometry_msgs/msg/point.hpp"
 #include <math.h>
 
+template<typename T>
+using ServiceResponseFuture = typename rclcpp::Client<T>::SharedFuture;
+
 using Point = geometry_msgs::msg::Point;
 using DeltaIK = deltarobot_interfaces::srv::DeltaIK;
 using DeltaJoints = deltarobot_interfaces::msg::DeltaJoints;
 using ConvertToJointTrajectory = deltarobot_interfaces::srv::ConvertToJointTrajectory;
-using ServiceResponseFuture = rclcpp::Client<ConvertToJointTrajectory>::SharedFuture;
 
 DeltaTrajectoryGenerator::DeltaTrajectoryGenerator() : Node("delta_trajectory_generator") {
   RCLCPP_INFO(get_logger(), "DeltaTrajectoryGenerator node started");
