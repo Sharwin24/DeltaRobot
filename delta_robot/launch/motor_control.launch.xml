@@ -1,3 +1,0 @@
-<launch>
-  <node pkg="deltarobot_motor_control" exec="delta_motor_control" name="delta_motor_control" output="screen"/>
-</launch>

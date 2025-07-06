@@ -1,3 +1,0 @@
-<launch>
-  <node pkg="deltarobot_trajectory_generator" exec="delta_trajectory_generator" name="delta_trajectory_generator" />
-</launch>

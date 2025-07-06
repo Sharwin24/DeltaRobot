@@ -1,23 +1,25 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-import os
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import XMLLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
+from launch.substitutions import PathJoinSubstitution
 
 
 def generate_launch_description():
-    config_file = os.path.join(
-        get_package_share_directory('delta_robot'),
-        'config',
-        'delta_config.yaml'
-    )
-
     return LaunchDescription([
         Node(
             package='delta_robot',
             executable='kinematics',
             name='kinematics',
             output='screen',
-            parameters=[config_file],
+            parameters=[
+                PathJoinSubstitution([
+                    get_package_share_directory('delta_robot'),
+                    'config',
+                    'delta_config.yaml'
+                ])
+            ],
         ),
         Node(
             package='delta_robot',
@@ -43,4 +45,13 @@ def generate_launch_description():
             name='trajectory_generator',
             output='screen',
         ),
+        IncludeLaunchDescription(
+            XMLLaunchDescriptionSource(
+                PathJoinSubstitution([
+                    get_package_share_directory('delta_robot_sensors'),
+                    'launch',
+                    'sensors.launch.xml'
+                ])
+            )
+        )
     ])
