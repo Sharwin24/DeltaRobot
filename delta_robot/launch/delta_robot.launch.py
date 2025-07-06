@@ -1,7 +1,7 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import XMLLaunchDescriptionSource
+from launch.launch_description_sources import AnyLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 from launch.substitutions import PathJoinSubstitution
 
@@ -46,7 +46,7 @@ def generate_launch_description():
             output='screen',
         ),
         IncludeLaunchDescription(
-            XMLLaunchDescriptionSource(
+            AnyLaunchDescriptionSource(
                 PathJoinSubstitution([
                     get_package_share_directory('delta_robot_sensors'),
                     'launch',
