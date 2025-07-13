@@ -1,6 +1,6 @@
 // robot geometry
 // (look at pics above for explanation)
-// TODO: CITE THIShttps://hypertriangle.com/~alex/delta-robot-tutorial/
+// TODO: CITE THIS https://hypertriangle.com/~alex/delta-robot-tutorial/
 
 #include <stdio.h>
 #include <math.h>

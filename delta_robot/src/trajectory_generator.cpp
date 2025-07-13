@@ -1,5 +1,8 @@
 /// @file trajectory_generator.cpp
 /// @brief Trajectory Generation Implementation for Delta Robot [Deprecated]
+/// @author Sharwin Patil
+/// @date 2025-07-13
+/// @version 1.0
 ///
 /// PARAMETERS:
 ///   None

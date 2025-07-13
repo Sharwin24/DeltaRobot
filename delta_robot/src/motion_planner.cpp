@@ -1,5 +1,8 @@
 /// @file motion_planner.cpp
 /// @brief Motion Planning Implementation for Delta Robot
+/// @author Sharwin Patil
+/// @date 2025-07-13
+/// @version 2.0
 ///
 /// PARAMETERS:
 ///   None
@@ -204,7 +207,8 @@ void DeltaMotionPlanner::playTrajectory(const std::vector<Point> trajectory) {
   convert_request->end_effector_trajectory = trajectory;
 
   auto joint_traj = std::make_shared<std::vector<DeltaJoints>>();
-  // ---------- BEGIN_CITATION [1] ----------
+  // ---------- BEGIN_CITATION ----------
+  // https://github.com/ros2/rclcpp/issues/312
   auto future_result = this->convert_to_joint_trajectory_client->async_send_request(
     convert_request,
     [this, joint_traj](ServiceResponseFuture<ConvertToJointTrajectory> future) {
@@ -215,7 +219,7 @@ void DeltaMotionPlanner::playTrajectory(const std::vector<Point> trajectory) {
     this->publishMotorCommands(*joint_traj, 50);
   }
   );
-  // ---------- END_CITATION [1] ----------
+  // ---------- END_CITATION ----------
 }
 
 void DeltaMotionPlanner::playDemoTrajectory(
@@ -253,7 +257,7 @@ void DeltaMotionPlanner::playDemoTrajectory(
 
 std::vector<Point> DeltaMotionPlanner::scanTrajectory() {
   // Scan trajectory is saved in "scan_trajectory.csv" file
-  return this->readCSV("scan_trajectory.csv");
+  return this->readCSV("csv_files/scan_trajectory.csv");
 }
 
 std::vector<Point> DeltaMotionPlanner::straightUpDownTrajectory() {
@@ -418,7 +422,7 @@ std::vector<Point> DeltaMotionPlanner::circleTrajectory() {
 
 std::vector<Point> DeltaMotionPlanner::randomSampleTrajectory(const int numPoints) {
   // Get all points from a random sample from random_points.csv
-  std::vector<Point> allPoints = this->readCSV("random_points.csv");
+  std::vector<Point> allPoints = this->readCSV("csv_files/random_points.csv");
 
   // Randomly sample numPoints points from allPoints
   std::vector<Point> sampledPoints;

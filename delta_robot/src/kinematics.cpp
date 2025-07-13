@@ -1,5 +1,9 @@
 /// @file kinematics.cpp
 /// @brief Kinematics Implementation for Delta Robot
+/// @author Sharwin Patil
+/// @date 2025-07-13
+/// @version 2.0
+/// @cite https://hypertriangle.com/~alex/delta-robot-tutorial/
 ///
 /// PARAMETERS:
 ///   base_triangle_side_length (float64): The side length of the equilateral triangle defining the base [mm]

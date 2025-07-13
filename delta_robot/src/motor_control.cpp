@@ -1,5 +1,8 @@
 /// @file motor_control.cpp
 /// @brief Motor Control Implementation for Delta Robot using Dynamixel X-Series Motors
+/// @author Sharwin Patil
+/// @date 2025-07-13
+/// @version 2.0
 ///
 /// PARAMETERS:
 ///   qos_depth (int8): The depth of the QoS queue for message reliability (default: 10)
